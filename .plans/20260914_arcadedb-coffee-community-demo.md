@@ -166,15 +166,15 @@ Verification on 2026-09-14: both profiles reset and seeded twice with stable ful
 
 ## Phase 3: Community Graph and Coffee Passport
 
-Status: Not started
+Status: Complete
 
-- [ ] Implement meeting capture with a simulated badge scan and an attributed `MET` edge.
-- [ ] Implement tasting, love, reconnect, game session, and game-result commands.
-- [ ] Implement `/demo/passport/:personSlug` as a timeline of coffee, people, and game interactions.
-- [ ] Implement `/demo/network/:personSlug` with direct connections, multi-hop paths, shared interests, and rematch candidates.
-- [ ] Add a query-inspection drawer that shows the Cypher or SQL used for each graph result.
-- [ ] Add slides for “record a meeting,” “coffee passport,” “who beat me,” “shortest social path,” and “people to reconnect with.”
-- [ ] Give every graph slide a stable persona-specific deep link, one exact action, and a named expected vertex or relationship.
+- [x] Implement meeting capture with a simulated badge scan and an attributed `MET` edge.
+- [x] Implement tasting, love, reconnect, game session, and game-result commands.
+- [x] Implement `/demo/passport/:personSlug` as a timeline of coffee, people, and game interactions.
+- [x] Implement `/demo/network/:personSlug` with direct connections, multi-hop paths, shared interests, and rematch candidates.
+- [x] Add a query-inspection drawer that shows the Cypher or SQL used for each graph result.
+- [x] Add slides for “record a meeting,” “coffee passport,” “who beat me,” “shortest social path,” and “people to reconnect with.”
+- [x] Give every graph slide a stable persona-specific deep link, one exact action, and a named expected vertex or relationship.
 
 ### Verification Plan
 
@@ -184,7 +184,13 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Implemented the graph API and Angular screens at `/demo/meet/:personSlug`, `/demo/passport/:personSlug`, and `/demo/network/:personSlug`. Badge scans resolve persistent indexed badges and record attributed meetings visible from both participants. Added tasting, love, reconnect, game-session, and game-result commands. Writes use HTTP transactions and a shared local gate with graph reads and reset; repeated scans, reactions, session creation, and matching results are idempotent. Conflicting participants/results and invalid input receive explicit errors. No schema version change or seed rebuild is required for this phase.
+
+The passport combines meetings, cups, reactions, reconnect intent, participation, and viewer-relative game wins/losses, including scores and session metadata. The network shows direct meetings, a shortest social path, shared interests, rematch candidates, and reconnect context. Shortest paths use breadth-first traversal in the API over SQL-loaded `MET` edges (bidirectional); the query-inspection drawer explicitly identifies that computation rather than claiming a native shortest-path query. Drawers display executed SQL/Cypher and parameters and retain the most recent mutation statements. Invalid path targets remain editable, and scans show persisted names, context, and location.
+
+Added five Obsidian slides for meeting capture, coffee passport, rematches, shortest paths, and reconnects, plus `docs/community-graph.md`. The meeting slide uses `badge-0003` so the authored Maya → Priya → Luis path remains two hops throughout the walkthrough. The passport defaults to the existing Blueberry Bloom brew and a new `demo-coffee-cards` session against Priya.
+
+Verification on 2026-09-14: `scripts/verify-community-graph.py --reset` passed against ArcadeDB, including four concurrent copies of all six commands, reverse scans, two- and three-hop paths, disconnected targets, both game perspectives, missing-record 404, invalid/null/blank input 400, and conflicting-session/result 409. Angular tests passed 15/15; API and production frontend builds passed without warnings. Passport timestamps normalize to UTC ISO 8601; real browser checks verified the 16:00 UTC seed renders at noon in Detroit and an invalid path target can be corrected without leaving the page. Real Chromium rehearsal passed all five slide actions, all mutation forms, repeated badge scanning, actual query inspection, route reload, mobile layout, and missing-persona errors. Code review findings were fixed and scoped re-review passed. Restored the story seed, reran Phase 2 seed/checkpoint regression checks successfully, and stopped Aspire. Phase 4 remains untouched.
 
 ## Phase 4: Documents, Recipes, Notes, and Provenance
 

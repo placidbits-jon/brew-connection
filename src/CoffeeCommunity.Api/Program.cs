@@ -14,6 +14,8 @@ builder.Services.AddHttpClient<EmbeddingClient>();
 builder.Services.AddSingleton<DemoReadiness>();
 builder.Services.AddSingleton<DemoBootstrapper>();
 builder.Services.AddTransient<DemoExplorer>();
+builder.Services.AddSingleton<CommunityGraphGate>();
+builder.Services.AddTransient<CommunityGraph>();
 builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<DemoBootstrapper>());
 builder.Services.AddHealthChecks()
     .AddCheck<ArcadeDbHealthCheck>("arcadedb", tags: ["ready"])
@@ -56,5 +58,6 @@ app.MapGet("/api/demo/story", async (string? persona, DemoExplorer explorer, Dem
     return story is null ? Results.NotFound(new { message = "Persona not found." }) : Results.Ok(story);
 });
 
+app.MapCommunityGraph();
 app.MapDefaultEndpoints();
 app.Run();

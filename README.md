@@ -33,6 +33,13 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 - [Schema explorer](http://localhost:4200/demo/lab?view=schema) shows live types, properties, and logical indexes.
 - [Seed profile guide](docs/seed-profiles.md) explains repeatability checks, scale ingestion, and the current embedding limitation.
 
+## Phase 3 checkpoints
+
+- [Badge scan](http://localhost:4200/demo/meet/maya-chen) records a meeting for Maya.
+- [Coffee passport](http://localhost:4200/demo/passport/maya-chen) combines cups, people, reactions, and games.
+- [Community network](http://localhost:4200/demo/network/maya-chen?target=luis-ortega) explains introductions, shared interests, reconnects, and rematches.
+- [Graph rehearsal guide](docs/community-graph.md) covers slide order, game actions, and integration tests.
+
 If Aspire reports that DCP cannot load a self-signed root CA from the local developer certificate, start with the process-local workaround:
 
 ```bash

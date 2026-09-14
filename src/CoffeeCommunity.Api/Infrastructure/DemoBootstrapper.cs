@@ -4,9 +4,10 @@ public sealed class DemoBootstrapper(
     ArcadeDbClient arcadeDb,
     EmbeddingClient embedding,
     DemoReadiness readiness,
+    CommunityGraphGate graphGate,
     ILogger<DemoBootstrapper> logger) : IHostedService
 {
-    private readonly SemaphoreSlim _gate = new(1, 1);
+    private SemaphoreSlim Gate => graphGate.Semaphore;
     public Task StartAsync(CancellationToken cancellationToken) => RunAsync(null, cancellationToken);
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     public Task ResetAsync(CancellationToken cancellationToken) => ResetAsync("story", cancellationToken);
@@ -18,7 +19,7 @@ public sealed class DemoBootstrapper(
 
     private async Task RunAsync(string? resetProfile, CancellationToken cancellationToken)
     {
-        await _gate.WaitAsync(cancellationToken);
+        await Gate.WaitAsync(cancellationToken);
         try
         {
             readiness.Starting();
@@ -58,6 +59,6 @@ public sealed class DemoBootstrapper(
             logger.LogError(exception, "Community schema/seed failed; restart or reset will rebuild incomplete data.");
             throw;
         }
-        finally { _gate.Release(); }
+        finally { Gate.Release(); }
     }
 }

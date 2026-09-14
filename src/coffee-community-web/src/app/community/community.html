@@ -1,0 +1,65 @@
+<main>
+  <header><a routerLink="/demo/story" class="brand">B/C · BREW CONNECTION</a><span>YOUR COMMUNITY PASSPORT</span></header>
+  <nav aria-label="Community"><a [routerLink]="['/demo/passport', slug()]">Passport</a><a [routerLink]="['/demo/meet', slug()]">Meet someone</a><a [routerLink]="['/demo/network', slug()]">My network</a></nav>
+  <p class="kicker">PEOPLE · CUPS · FRIENDLY COMPETITION</p>
+  <h1>{{ mode() === 'meet' ? 'Make a connection.' : mode() === 'network' ? 'Find your people.' : 'Remember the moment.' }}</h1>
+  @if (person(); as person) { <p class="subtitle">{{ person.name }}’s {{ mode() === 'network' ? 'network' : 'coffee passport' }}</p> }
+  @if (loading()) { <p role="status">Loading your community…</p> }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p><button (click)="retry()" [disabled]="busy()">Reload community</button> }
+  @if (message()) { <p class="success" role="status">{{ message() }}</p> }
+
+  @if (mode() === 'network') {
+      <section class="card"><h2>A path to your next conversation</h2><form class="path-form" (submit)="findPath($event)"><label>Find a person by slug<input [formField]="fields.pathTarget"></label><button type="submit">Find shortest path</button></form>
+        @if (network()) {
+        @for (path of network()!.paths; track $index) { <ol class="path" aria-label="Shortest connection path">@for (name of path.names; track $index) { <li>{{ name }}</li> }</ol><p>{{ path.slugs.length - 1 }} connection{{ path.slugs.length === 2 ? '' : 's' }} away</p> }
+        @empty { <p>No connection path found yet.</p> }
+        }
+      </section>
+  }
+
+  @if (person()) {
+    @if (mode() === 'meet') {
+      <section class="card narrow"><h2>Scan a badge</h2><p>Enter the badge code of someone you met and remember where the conversation started.</p>
+        <form (submit)="save('meet', $event)"><fieldset [disabled]="busy()">
+          <label>Badge code<input [formField]="fields.badgeCode" autocomplete="off"></label>
+          <label>What brought you together?<input [formField]="fields.context"></label>
+          <label>Where did you meet?<input [formField]="fields.location"></label>
+          <button class="primary" type="submit">{{ busy() ? 'Saving…' : 'Scan badge' }}</button>
+        </fieldset></form>
+      </section>
+      <section class="card narrow" aria-label="Recent meetings"><h2>Recent meetings</h2><ul>
+        @for (meeting of meetings(); track $index) { <li><strong>{{ meeting.title }}</strong><small>{{ meeting.context }}</small><small>{{ meeting.location }}</small><time>{{ meeting.occurredAt | date:'medium' }}</time></li> }
+        @empty { <li>No meetings yet. Scan a badge to start a conversation.</li> }
+      </ul></section>
+    }
+    @if (mode() === 'passport') {
+      <div class="columns">
+        <section><h2>Your timeline</h2><ol class="timeline">
+          @for (item of passport()!.timeline; track $index) { <li><span class="kicker">{{ item.kind.replaceAll('_', ' ') }}</span><h3>{{ item.title }}</h3><p>{{ item.context }}</p>@if (item.location) { <p>{{ item.location }}</p> }<time>{{ item.occurredAt | date:'medium' }}</time></li> }
+          @empty { <li>Your next conversation or cup starts the story.</li> }
+        </ol></section>
+        <section class="actions"><h2>Add a moment</h2>
+          <article class="card"><h3>A cup to remember</h3><label>Brew slug<input [formField]="fields.brewSlug"></label><div class="buttons"><button [disabled]="busy()" (click)="save('tastings')">Log tasting</button><button [disabled]="busy()" (click)="save('loves')">Love this cup</button></div></article>
+          <article class="card"><h3>Keep the conversation going</h3><label>Person slug<input [formField]="fields.targetSlug"></label><button [disabled]="busy()" (click)="save('reconnects')">Save reconnect</button></article>
+          <article class="card"><h3>A friendly game</h3><label>Session slug<input [formField]="fields.sessionSlug"></label><label>Game slug<input [formField]="fields.gameSlug"></label><label>Opponent slug<input [formField]="fields.opponentSlug"></label><button [disabled]="busy()" (click)="save('game-sessions')">Start game</button><p>Record a win for {{ person()!.name }}.</p><div class="scores"><label>Your score<input type="number" [formField]="fields.winnerScore"></label><label>Opponent score<input type="number" [formField]="fields.loserScore"></label></div><button [disabled]="busy()" (click)="save('game-results')">Record result</button></article>
+        </section>
+      </div>
+    }
+    @if (network(); as network) {
+      <nav aria-label="Network sections"><button (click)="rematches.scrollIntoView()">Show rematch candidates</button><button (click)="reconnects.scrollIntoView()">Show reconnect targets</button></nav>
+      <div class="network-grid">
+        <section class="card"><h2>People you’ve met</h2><ul>@for (person of network.connections; track person.slug) { <li>{{ person.name }}</li> } @empty { <li>No meetings yet.</li> }</ul><a [routerLink]="['/demo/meet', slug()]">Meet someone →</a></section>
+        <section class="card"><h2>Shared interests</h2><ul class="interest-list">@for (person of network.sharedInterests; track person.slug) { <li>{{ person.name }}<small>{{ person.interests.join(' · ') }}</small></li> } @empty { <li>No shared interests found yet.</li> }</ul></section>
+        <section class="card" id="rematches" #rematches><h2>Time for a rematch</h2><ul>@for (person of network.rematches; track $index) { <li>{{ person.name }}<small>Your score {{ person.opponentScore }} · Their score {{ person.score }}</small><small>Session: {{ person.sessionSlug }}</small></li> } @empty { <li>No losses to avenge yet.</li> }</ul></section>
+        <section class="card" id="reconnects" #reconnects><h2>Reconnect next</h2><ul>@for (person of network.reconnects; track person.slug) { <li>{{ person.name }}<small>{{ person.context }}</small></li> } @empty { <li>No reconnects saved yet.</li> }</ul></section>
+      </div>
+    }
+  }
+  <footer><button (click)="showQueries.set(!showQueries())" [attr.aria-expanded]="showQueries()" aria-controls="queries">{{ showQueries() ? 'Hide queries' : 'Inspect queries' }}</button><span>Live results from ArcadeDB</span></footer>
+  @if (showQueries()) {
+    <aside id="queries" aria-label="Executed queries" class="drawer"><div class="drawer-heading"><h2>Executed queries</h2><button (click)="showQueries.set(false)">Close queries</button></div><p>Queries and parameters returned by the API for these results, including the last saved action.</p>
+      @for (query of queries(); track $index) { <article><h3>{{ query.label }} <small>{{ query.language }}</small></h3><pre>{{ query.command }}</pre><h4>Parameters</h4><pre>{{ query.parameters | json }}</pre></article> }
+      @empty { <p>No successful queries have been returned yet.</p> }
+    </aside>
+  }
+</main>

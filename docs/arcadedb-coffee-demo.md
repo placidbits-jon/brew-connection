@@ -88,6 +88,86 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+## Record a meeting
+
+**ArcadeDB:** Persistent badge lookup and an attributed `MET` edge
+
+- A badge resolves to a person using a stable indexed key.
+- The meeting records where and why two people connected.
+- Repeating the same scan keeps one relationship.
+
+**Activate demo:** [Scan a badge as Maya](http://localhost:4200/demo/meet/maya-chen)
+
+**Action:** Leave badge code `badge-0003` selected and click **Scan badge**.
+
+**Look for:** Maya meets Attendee 0003, with the meeting context and location saved. Scanning again does not add another meeting.
+
+---
+
+## Your coffee passport
+
+**ArcadeDB:** Traversals over tasting, love, meeting, and game edges
+
+- One timeline brings together cups, conversations, and games.
+- Reactions belong to the relationship between a person and a brew.
+- Query inspection exposes the statements behind the timeline.
+
+**Activate demo:** [Open Maya's passport](http://localhost:4200/demo/passport/maya-chen)
+
+**Action:** Click **Love this cup** for the default `blueberry-bloom-v60` brew, then **Inspect queries**.
+
+**Look for:** Maya's love for Priya's Blueberry Bloom V60 appears in the timeline, alongside the executed query and parameters.
+
+---
+
+## Who beat me?
+
+**ArcadeDB:** Game session vertices and scored `BEAT_IN_GAME` edges
+
+- A session groups participants and an outcome.
+- Scores remain attached to the game relationship.
+- A loss becomes an explicit rematch candidate.
+
+**Activate demo:** [Open Maya's community network](http://localhost:4200/demo/network/maya-chen?target=luis-ortega)
+
+**Action:** Select **Show rematch candidates**.
+
+**Look for:** Luis Ortega beat Maya 10–7 in `maya-luis-rematch`.
+
+---
+
+## The shortest social path
+
+**ArcadeDB:** Multi-hop traversal through the `MET` graph
+
+- Maya knows Priya, and Priya knows Luis.
+- The path explains how to make an introduction.
+- The result comes from the current relationship graph.
+
+**Activate demo:** [Find Maya's path to Luis](http://localhost:4200/demo/network/maya-chen?target=luis-ortega)
+
+**Action:** Click **Find shortest path** with Luis Ortega selected.
+
+**Look for:** Maya Chen → Priya Nair → Luis Ortega, two meeting hops.
+
+---
+
+## People to reconnect with
+
+**ArcadeDB:** Attributed `WANTS_TO_RECONNECT` edges and shared interests
+
+- Explicit intent keeps useful conversations from getting lost.
+- Shared interests provide a reason to reconnect.
+- Saving the same target again does not duplicate that intent.
+
+**Activate demo:** [Open Maya's reconnect targets](http://localhost:4200/demo/network/maya-chen?target=luis-ortega)
+
+**Action:** Select **Show reconnect targets**.
+
+**Look for:** Priya Nair remains Maya's reconnect target for the blueberry recipe.
+
+---
+
 ## Compatibility checkpoint
 
 **ArcadeDB:** Version 26.9.1 with native and plugin query engines
