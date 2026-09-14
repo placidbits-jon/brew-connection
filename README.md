@@ -8,6 +8,7 @@ A local demo of a tech-conference coffee community, built with Angular, ASP.NET 
 - .NET SDK 10
 - Aspire CLI 13.5.3 or newer
 - Node.js 24.15.0 (the repository includes `.nvmrc`)
+- [Ollama](https://ollama.com/download) on `PATH` for local embeddings and optional query interpretation
 
 ## Start the application
 
@@ -18,6 +19,8 @@ aspire wait web
 ```
 
 Open [http://localhost:4200/demo/story](http://localhost:4200/demo/story). The Aspire command prints a tokenized dashboard URL for resource logs, traces, and health.
+
+First startup downloads approximately 1.15 GB of pinned local models. Later starts reuse the ignored `.aspire/models` cache; see [local model setup](docs/local-models.md).
 
 ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses the fixed local-only root password `CoffeeDemo_Local_2026!`; it is intentionally scoped to this disposable developer environment.
 
@@ -31,7 +34,7 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 
 - [Maya's seeded story](http://localhost:4200/demo/story?persona=maya) shows community counts, meetings, tastings, and rematch targets.
 - [Schema explorer](http://localhost:4200/demo/lab?view=schema) shows live types, properties, and logical indexes.
-- [Seed profile guide](docs/seed-profiles.md) explains repeatability checks, scale ingestion, and the current embedding limitation.
+- [Seed profile guide](docs/seed-profiles.md) explains repeatability checks, scale ingestion, and local embedding indexing.
 
 ## Phase 3 checkpoints
 
@@ -45,6 +48,12 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 - [Structured recipe](http://localhost:4200/demo/recipes/blueberry-v60?persona=maya-chen) supports nested editing, revision publishing, and comparison.
 - [Coffee provenance](http://localhost:4200/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen) connects the origin, people, and pinned recipe revision.
 - [Document rehearsal guide](docs/recipe-documents.md) covers notes, persona visibility, and verification.
+
+## Phase 5 checkpoints
+
+- [Discovery](http://localhost:4200/demo/discover?query=blueberry&mode=keyword&persona=maya-chen&availableOnly=true) compares keyword, semantic, hybrid, and personalized results with visible scores and evidence.
+- [Discovery rehearsal guide](docs/discovery.md) explains the four slide outcomes, full-text examples, ranking, and verification.
+- [Local model setup](docs/local-models.md) covers model pins, downloads, readiness, and optional natural-language input.
 
 If Aspire reports that DCP cannot load a self-signed root CA from the local developer certificate, start with the process-local workaround:
 

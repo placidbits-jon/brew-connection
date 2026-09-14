@@ -14,7 +14,7 @@ public sealed record CreateRecipeRequest(string Slug, string Name, string Person
 public sealed record PublishRecipeRequest(string PersonSlug, int ExpectedRevision, RecipeDocument Revision);
 public sealed record CreateNoteRequest(string Slug, string PersonSlug, string SubjectType, string SubjectSlug, string Visibility, string Body);
 
-public sealed class CommunityDocuments(ArcadeDbClient db, CommunityGraphGate gate, DemoReadiness readiness)
+public sealed class CommunityDocuments(ArcadeDbClient db, CommunityGraphGate gate, DemoReadiness readiness, EmbeddingClient embeddings)
 {
     private readonly List<GraphQuery> queries = [];
     private string? transaction;
@@ -102,14 +102,17 @@ public sealed class CommunityDocuments(ArcadeDbClient db, CommunityGraphGate gat
     {
         Slug(request.Slug); Text(request.Name); Validate(request.Revision); await Record("Person", request.PersonSlug, ct);
         if ((await Query("Check recipe identity", "SELECT FROM Recipe WHERE slug=:slug", new { slug = request.Slug }, ct)).Length != 0) throw new GraphRequestException(409, "Recipe slug already exists.");
-        await Query("Create recipe vertex", "INSERT INTO Recipe SET slug=:slug, name=:name, searchText=:searchText", new { slug = request.Slug, name = request.Name, searchText = request.Name }, ct);
+        var searchText = CommunitySearchText.Recipe(request.Name, request.Revision);
+        var vector = await embeddings.EmbedAsync(searchText, ct);
+        await Query("Create recipe vertex", "INSERT INTO Recipe SET slug=:slug, name=:name, searchText=:searchText", new { slug = request.Slug, name = request.Name, searchText }, ct);
         await InsertRevision(request.Slug, 1, request.PersonSlug, request.Revision, ct);
+        await IndexRecipe(request.Slug, searchText, vector, ct);
         return await RecipeResult(request.Slug, request.PersonSlug, ct);
     }
     public async Task<object> Publish(string slug, PublishRecipeRequest request, CancellationToken ct)
     {
         Validate(request.Revision); if (request.ExpectedRevision is < 1 or > 100000) throw Bad("Provide the expected current revision number.");
-        await Record("Person", request.PersonSlug, ct); await Record("Recipe", slug, ct);
+        await Record("Person", request.PersonSlug, ct); var recipe = await Record("Recipe", slug, ct);
         var revisions = await Revisions(slug, ct);
         var version = request.ExpectedRevision + 1;
         var existing = revisions.FirstOrDefault(r => r.GetProperty("revision").GetInt32() == version);
@@ -120,9 +123,25 @@ public sealed class CommunityDocuments(ArcadeDbClient db, CommunityGraphGate gat
         }
         var pointer = await Query("Check optimistic revision", "SELECT currentRevision.revision AS revision FROM Recipe WHERE slug=:slug", new { slug }, ct);
         if (pointer[0].GetProperty("revision").GetInt32() != request.ExpectedRevision) throw new GraphRequestException(409, "The current revision changed. Reload before publishing.");
+        var searchText = CommunitySearchText.Recipe(Str(recipe, "name"), request.Revision);
+        var vector = await embeddings.EmbedAsync(searchText, ct);
         // Gate serializes the single local API; the HTTP transaction makes the insert and pointer atomic.
         await InsertRevision(slug, version, request.PersonSlug, request.Revision, ct);
+        await IndexRecipe(slug, searchText, vector, ct);
         return await RecipeResult(slug, request.PersonSlug, ct);
+    }
+    private async Task IndexRecipe(string slug, string text, float[] embedding, CancellationToken ct)
+    {
+        await Query("Update canonical public search text", "UPDATE Recipe SET searchText=:text WHERE slug=:slug", new { slug, text }, ct);
+        var existing = await Query("Find recipe embedding", "SELECT slug FROM SearchEmbedding WHERE subjectType='Recipe' AND subjectSlug=:slug", new { slug }, ct);
+        var parameters = new { slug, embeddingSlug = "Recipe:" + slug, text, embedding, version = CommunitySearchText.Version };
+        if (existing.Length == 0)
+        {
+            await Query("Index locally embedded current revision atomically", "INSERT INTO SearchEmbedding SET slug=:embeddingSlug, subjectSlug=:slug, subjectType='Recipe', text=:text, embedding=:embedding, provider='ollama', model='embeddinggemma:300m', dimensions=768, indexVersion=:version", parameters, ct);
+            await Query("Link indexed recipe subject", "UPDATE SearchEmbedding SET subject=(SELECT FROM Recipe WHERE slug=:slug) WHERE slug=:embeddingSlug", parameters, ct);
+        }
+        else
+            await Query("Refresh locally embedded current revision atomically", "UPDATE SearchEmbedding SET text=:text, embedding=:embedding, provider='ollama', model='embeddinggemma:300m', dimensions=768, indexVersion=:version WHERE subjectType='Recipe' AND subjectSlug=:slug", parameters, ct);
     }
     private static void SubjectType(string type)
     {

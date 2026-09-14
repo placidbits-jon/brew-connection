@@ -33,7 +33,8 @@ public sealed class DemoReadiness
         schema = _schemaReady ? "ready" : "starting",
         seed = _seedReady ? "ready" : "starting",
         embedding = embeddingReady ? "ready" : "unavailable",
-        embeddingProvider = "deterministic-compatibility",
+        embeddingProvider = "ollama",
+        embeddingModel = "embeddinggemma:300m",
         error = _error,
         demoRoutes = new[]
         {

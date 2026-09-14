@@ -32,7 +32,6 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         var scale = profile == "scale";
         var people = scale ? 2040 : 40;
         var batches = scale ? 2025 : 25;
-        var searchableText = new Dictionary<string, string>();
         for (var i = 0; i < people; i++)
             await Record("Person", new { slug = Person(i), name = i switch { 0 => "Maya Chen", 1 => "Priya Nair", 2 => "Luis Ortega", _ => $"Attendee {i:0000}" }, role = i switch { 0 => "Curious taster", 1 => "Community brewer", 2 => "Roaster and game host", _ => "Attendee" }, interests = new[] { i % 2 == 0 ? "fruit-forward" : "chocolate", "coffee" } }, ct);
         await Record("Event", new { slug = "brew-connection-2026", name = "Brew Connection at TechCon", startsAt = "2026-09-14 16:00:00" }, ct);
@@ -46,9 +45,8 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         for (var i = 0; i < batches; i++)
         {
             var text = i switch { 0 => "Blueberry jasmine floral fruit-forward Ethiopia natural coffee", 1 => "Blueberry label collector: dark smoky bitter roast, keyword-only match", 2 => "Summer orchard: ripe berry nectar, fragrant blossom, delicate bright cup", 3 => "Priya's favorite: stone fruit honey tea-like washed coffee", _ => $"Coffee origin {i % 12} {(i % 2 == 0 ? "cocoa caramel" : "citrus floral")} roast {i}" };
-            searchableText[Batch(i)] = text;
             await Record("CoffeeLot", new { slug = $"lot-{i:0000}", name = i == 0 ? "Ethiopia Guji Lot 17" : $"Origin Lot {i}", origin = i == 0 ? "Guji, Ethiopia" : $"Origin {i % 12}", process = "natural", searchText = text }, ct);
-            await Record("RoastBatch", new { slug = Batch(i), name = i == 0 ? "Ethiopia Blueberry Bloom" : i == 1 ? "Blueberry Label Dark Roast" : i == 2 ? "Summer Orchard" : i == 3 ? "Priya's Honey Stonefruit" : $"Community Roast {i:0000}", searchText = text, scenario = i switch { 1 => "keyword-only", 2 => "semantic-only-candidate", 3 => "graph-personalized", _ => "provenance" } }, ct);
+            await Record("RoastBatch", new { slug = Batch(i), name = i == 0 ? "Ethiopia Blueberry Bloom" : i == 1 ? "Blueberry Label Dark Roast" : i == 2 ? "Summer Orchard" : i == 3 ? "Priya's Honey Stonefruit" : $"Community Roast {i:0000}", description = text, searchText = text, scenario = i switch { 1 => "keyword-only", 2 => "semantic-only-candidate", 3 => "graph-personalized", _ => "provenance" } }, ct);
             await Record("RoastProfile", new { slug = $"profile-{i:0000}", phases = new[] { new { name = "drying", seconds = 240, temperatureC = 150 }, new { name = "development", seconds = 90, temperatureC = 205 } }, developmentSeconds = 90, expectedFlavors = new[] { "blueberry", "jasmine" }, searchText = text, narrative = "Gentle development preserves origin character." }, ct);
             await Statement($"UPDATE RoastProfile SET roastBatch=(SELECT FROM RoastBatch WHERE slug={Json(Batch(i))}) WHERE slug='profile-{i:0000}'", ct);
             await Edge("FROM_LOT", "RoastBatch", Batch(i), "CoffeeLot", $"lot-{i:0000}", "traceable origin", ct);
@@ -57,7 +55,6 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         }
         for (var i = 0; i < 20; i++)
         {
-            searchableText[Recipe(i)] = i == 0 ? "Blueberry jasmine floral V60 pour over" : $"Balanced coffee recipe method {i % 4}";
             await Record("Recipe", new { slug = Recipe(i), name = i == 0 ? "Blueberry Bloom V60" : $"Community Recipe {i}", searchText = i == 0 ? "Blueberry jasmine floral V60 pour over" : $"Balanced coffee recipe method {i % 4}" }, ct);
             for (var revision = 1; revision <= 2; revision++)
                 await Record("RecipeRevision", new { slug = $"{Recipe(i)}-v{revision}", revision, steps = new[] { new { atSeconds = 0, waterGrams = 60, action = "Bloom" }, new { atSeconds = 45, waterGrams = 180, action = "Slow spiral pour" }, new { atSeconds = 90, waterGrams = 300, action = "Finish pour" } }, equipment = new { brewer = "V60", filter = "paper", grinder = "hand grinder" }, grind = new { clicks = 22 - revision }, temperatureC = 93, coffeeGrams = 20, waterGrams = 300, commentary = revision == 1 ? "Original community recipe" : "Slightly finer grind for a sweeter finish" }, ct);
@@ -104,20 +101,17 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         await Statement("UPDATE BadgeLookup SET target=(SELECT FROM RoastBatch WHERE slug='ethiopia-blueberry-bloom') WHERE slug='short-blueberry'", ct);
         await Flush(ct);
         logger.LogInformation("Seed {Profile}: graph and documents written; generating local vectors.", profile);
-        // The foundation provider is explicitly a deterministic compatibility hash, not a semantic model.
-        // Keep provider metadata on every vector so discovery never mislabels this as semantic inference.
+        // Scale aliases stress the vector index while retrieval deduplicates by subject.
         var vectorCount = scale ? 20045 : 45;
-        var cache = new Dictionary<string, float[]>();
         for (var i = 0; i < vectorCount; i++)
         {
             var subjectType = i < 25 || i >= 45 ? "RoastBatch" : "Recipe";
             var subjectSlug = subjectType == "Recipe" ? Recipe(i - 25) : Batch(i < 25 ? i : (i - 45) % batches);
-            var text = searchableText[subjectSlug];
-            if (!cache.TryGetValue(text, out var vector)) cache[text] = vector = await embeddings.EmbedAsync(text, ct);
-            await Record("SearchEmbedding", new { slug = $"embedding-{i:00000}", subjectSlug, subjectType, text, provider = "deterministic-compatibility", dimensions = 768, embedding = vector }, ct);
+            await Record("SearchEmbedding", new { slug = $"embedding-{i:00000}", subjectSlug, subjectType }, ct);
             await Statement($"UPDATE SearchEmbedding SET subject=(SELECT FROM {subjectType} WHERE slug={Json(subjectSlug)}) WHERE slug='embedding-{i:00000}'", ct);
         }
         await Flush(ct);
+        await new CommunitySearchIndex(db, embeddings).RebuildAsync(ct);
         var samples = scale ? 2000000 : 6000;
         var lines = new StringBuilder(2_000_000);
         for (var i = 0; i < samples; i++)
@@ -135,7 +129,7 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         }
         for (var i = 0; i < 120; i++) lines.Append(CultureInfo.InvariantCulture, $"EventActivity,event_id=brew-connection-2026,area=pour-over-bar,kind=tasting count={i % 5 + 1}.0,duration=30.0 {Epoch + i * 60000L}\n");
         await db.WriteTimeSeriesAsync(lines.ToString(), ct);
-        using var done = await db.CommandAsync("sql", "UPDATE EventConfiguration SET seedComplete=true, telemetrySamples=:samples, embeddingCount=:vectorCount, peopleCount=:people, roastBatchCount=:batches, telemetryEpoch=:epoch, features={graph:true,documents:true,fullText:true,vectors:true,timeSeries:true,geospatial:true}, embeddingProvider='deterministic-compatibility' WHERE slug='brew-connection-2026'", new { samples, vectorCount, people, batches, epoch = Epoch }, ct);
+        using var done = await db.CommandAsync("sql", "UPDATE EventConfiguration SET seedComplete=true, telemetrySamples=:samples, embeddingCount=:vectorCount, peopleCount=:people, roastBatchCount=:batches, telemetryEpoch=:epoch, features={graph:true,documents:true,fullText:true,vectors:true,timeSeries:true,geospatial:true}, embeddingProvider='ollama' WHERE slug='brew-connection-2026'", new { samples, vectorCount, people, batches, epoch = Epoch }, ct);
         logger.LogInformation("Seed {Profile} complete: {People} people, {Batches} coffees, {Vectors} vectors, {Samples} samples.", profile, people, batches, vectorCount, samples);
     }
 }

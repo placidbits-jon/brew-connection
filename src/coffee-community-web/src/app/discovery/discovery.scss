@@ -1,0 +1,283 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: radial-gradient(circle at 84% 8%, #3b281d, transparent 30rem), #11110f;
+}
+main {
+  max-width: 1180px;
+  margin: auto;
+  padding: 0 28px 64px;
+}
+header,
+footer,
+.result-summary,
+.drawer-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+header {
+  height: 90px;
+  border-bottom: 1px solid #514b41;
+}
+header a {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+header span,
+.kicker {
+  font:
+    11px ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+  color: #d68b56;
+}
+.kicker {
+  margin-top: 56px;
+}
+h1 {
+  font-size: clamp(40px, 7vw, 78px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  margin: 20px 0;
+}
+.lede,
+p {
+  color: #bbb3a5;
+  line-height: 1.6;
+}
+a {
+  color: #d68b56;
+  text-decoration: none;
+}
+label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  color: #bbb3a5;
+}
+input,
+select,
+button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #615648;
+  border-radius: 2px;
+  font: inherit;
+}
+input,
+select {
+  color: #f7f3e8;
+  background: #181613;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+button {
+  background: #211d18;
+  color: #d68b56;
+  cursor: pointer;
+}
+.primary,
+button.active {
+  background: #d68b56;
+  color: #17130f;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+:focus-visible {
+  outline: 2px solid #f1b788;
+  outline-offset: 3px;
+}
+.search-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: end;
+  margin: 32px 0;
+}
+.filters {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+.check input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: #d68b56;
+}
+nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+.result-summary {
+  padding: 24px 0;
+  border-top: 1px solid #514b41;
+  color: #bbb3a5;
+  flex-wrap: wrap;
+}
+small {
+  color: #aaa294;
+  font-size: 11px;
+}
+.results {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.results article {
+  border: 1px solid #514b41;
+  background: #181613;
+  padding: 24px;
+}
+.result-heading {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.rank {
+  font:
+    20px ui-monospace,
+    monospace;
+  color: #aaa294;
+}
+h2 {
+  font-size: 25px;
+  font-weight: 500;
+  margin: 8px 0;
+}
+.total {
+  margin-left: auto;
+  font:
+    22px ui-monospace,
+    monospace;
+  text-align: right;
+}
+.total small {
+  display: block;
+  white-space: nowrap;
+  margin-top: 6px;
+}
+.scores {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  border-block: 1px solid #3e3931;
+}
+.scores dt {
+  color: #aaa294;
+  font-size: 11px;
+}
+.scores dd {
+  margin: 6px 0 0;
+  font:
+    15px ui-monospace,
+    monospace;
+}
+.evidence {
+  padding-left: 20px;
+  color: #b7c9a1;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.error {
+  color: #efa697;
+}
+.empty {
+  color: #bbb3a5;
+  padding: 24px;
+}
+footer {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #514b41;
+}
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(700px, 100%);
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 28px;
+  background: #211d18;
+  border-left: 1px solid #d68b56;
+  box-shadow: -20px 0 80px #0009;
+  z-index: 10;
+}
+.drawer article {
+  border-top: 1px solid #615648;
+  padding-block: 14px;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #11110f;
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 600px) {
+  header span {
+    display: none;
+  }
+  .search-form {
+    grid-template-columns: 1fr;
+  }
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .result-heading {
+    flex-wrap: wrap;
+  }
+  .total {
+    margin-left: 38px;
+    text-align: left;
+  }
+  main {
+    padding-inline: 20px;
+  }
+}
+
+.helper {
+  border: 1px solid #3b413c;
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.helper summary {
+  cursor: pointer;
+}
+.helper form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1rem;
+}
+.helper label {
+  flex: 1;
+  min-width: 200px;
+}
+.ranking {
+  font-size: 0.8rem;
+  color: #a8b5ab;
+  max-width: 85ch;
+}
+
+.result-summary {
+  flex-wrap: wrap;
+}

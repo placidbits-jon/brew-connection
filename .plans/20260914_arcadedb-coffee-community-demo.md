@@ -223,17 +223,17 @@ Added the four requested Obsidian slides and `docs/recipe-documents.md`. Verific
 
 ## Phase 5: Full-Text, Vector, and Graph-Aware Discovery
 
-Status: Not started
+Status: Complete
 
-- [ ] Build canonical searchable text for roast batches and recipes and generate embeddings locally during seeding and publishing.
-- [ ] Implement full-text search with relevance, phrase, fuzzy, stemming, autocomplete, and “more like this” examples.
-- [ ] Implement vector-neighbor search with selected dimensions, similarity, filtering, and visible distance scores.
-- [ ] Implement hybrid ranking with explicit full-text, vector, and graph-personalization contributions.
-- [ ] Implement `/demo/discover` modes that reuse the same query while showing how each retrieval strategy changes the ranking.
-- [ ] Add recommendation explanations based on actual paths, similarities, and availability instead of generated claims.
-- [ ] Add a local-model natural-language entry point only after deterministic retrieval and explanations work without an LLM.
-- [ ] Add slides for “keyword search,” “semantic search,” “hybrid ranking,” and “find my next coffee.”
-- [ ] Use a stable query on every discovery slide and state the exact result that moves or appears when the mode changes.
+- [x] Build canonical searchable text for roast batches and recipes and generate embeddings locally during seeding and publishing.
+- [x] Implement full-text search with relevance, phrase, fuzzy, stemming, autocomplete, and “more like this” examples.
+- [x] Implement vector-neighbor search with selected dimensions, similarity, filtering, and visible distance scores.
+- [x] Implement hybrid ranking with explicit full-text, vector, and graph-personalization contributions.
+- [x] Implement `/demo/discover` modes that reuse the same query while showing how each retrieval strategy changes the ranking.
+- [x] Add recommendation explanations based on actual paths, similarities, and availability instead of generated claims.
+- [x] Add a local-model natural-language entry point only after deterministic retrieval and explanations work without an LLM.
+- [x] Add slides for “keyword search,” “semantic search,” “hybrid ranking,” and “find my next coffee.”
+- [x] Use a stable query on every discovery slide and state the exact result that moves or appears when the mode changes.
 
 ### Verification Plan
 
@@ -244,7 +244,17 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Implemented `/demo/discover` with URL-preserved query, persona, type, availability, and four retrieval modes. Lucene supports relevance, phrase, fuzzy spelling, English stemming, autocomplete, and native more-like-this queries. ArcadeDB's LSM_VECTOR cosine index supplies real 768-dimensional neighbors; aliases are grouped by subject before the HTTP row limit, filters apply before the final top 20, and stable slug ordering breaks ties. The API exposes exact keyword, vector, and community contributions, actual vendor availability and acquaintance/favorite paths, executed SQL/Cypher, and index plans. Hybrid ranking uses 0.35 × normalized BM25 + 0.65 × cosine similarity; personalized ranking adds 0.50 once for a qualifying available acquaintance favorite.
+
+Replaced compatibility hashes with pinned local EmbeddingGemma through an Aspire-managed Ollama executable. Required embedding readiness precedes the optional Qwen download, so all four retrieval modes work without a language-model answer. The optional natural-language control returns a visible editable query and uses the same database retrieval/explanations. Models cache in ignored `.aspire/models`; first startup downloads approximately 1.15 GB. Setup, digests, inference checks, and offline reuse are documented in `docs/local-models.md`.
+
+Both indexes consume the same public canonical text, bounded to 1,500 UTF-8 bytes without splitting Unicode runes; complete immutable recipe documents remain unchanged. Seed and in-place upgrade paths refresh real vectors, preserve existing revisions/notes, and mark the index version only when complete. Publication updates current-revision links, canonical text, and type-qualified embedding records in the same transaction. Migration retries retain the original roast description. Scale aliases retain their count and canonical subject vectors.
+
+Added four Obsidian slides and `docs/discovery.md`. The stable query `blueberry` yields Ethiopia Blueberry Bloom first in keyword mode; Summer Orchard appears at semantic rank 4; Ethiopia moves from semantic rank 3 to hybrid rank 1; Priya's Honey Stonefruit moves from hybrid rank 5 to personalized rank 1. The slides explicitly acknowledge that the dark roast ranks first for the single-word semantic query. The inspector labels API ranking and filtering rather than attributing those calculations to a native database query.
+
+Verification on 2026-09-14: the discovery suite passed clean story reseeding with identical rank order and distance tolerance 1e-5, all full-text examples, actual index plans, filtering, validation, and create/publish index updates. The scale profile passed with 20,045 embedding records and 2,000,000 telemetry samples, preserving the authored mode outcomes. Migration verification passed two forced in-place rebuilds with identical vectors and preserved user revisions/source text; a late embedding uniqueness failure rolled back both the recipe and revision. Unavailable vendors correctly removed coffee results from the availability filter and removed the graph boost. Long Unicode documents and recipe slugs matching legacy embedding IDs passed.
+
+Real model checks passed digest pins, finite normalized 768-dimensional vectors, repeatability, batch inference, semantic contrast, bounded request validation, and optional Qwen interpretation. All 28 Angular tests passed, including query persistence, failed-search recovery, and stale-helper-response protection. Real Chromium rehearsal passed all four slides, exact ranking movements, query plans/evidence, helper use, reload, type filtering, error recovery, and mobile layout without console errors. Scoped review has no remaining substantive findings. Phase 4 document, Phase 3 graph, and Phase 2 seed/checkpoint regressions passed. Final .NET solution and production Angular builds passed without warnings. Story data was restored and Aspire stopped. Phase 6 remains untouched.
 
 ## Phase 6: Key/Value, Time-Series, and Geospatial Features
 

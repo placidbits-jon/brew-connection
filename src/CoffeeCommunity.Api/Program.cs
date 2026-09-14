@@ -10,13 +10,16 @@ builder.Services.Configure<EmbeddingOptions>(builder.Configuration.GetSection(Em
 #pragma warning disable EXTEXP0001 // Scoped opt-out for non-idempotent database commands.
 builder.Services.AddHttpClient<ArcadeDbClient>().RemoveAllResilienceHandlers();
 #pragma warning restore EXTEXP0001
-builder.Services.AddHttpClient<EmbeddingClient>();
+#pragma warning disable EXTEXP0001
+builder.Services.AddHttpClient<EmbeddingClient>(client => client.Timeout = TimeSpan.FromMinutes(10)).RemoveAllResilienceHandlers();
+#pragma warning restore EXTEXP0001
 builder.Services.AddSingleton<DemoReadiness>();
 builder.Services.AddSingleton<DemoBootstrapper>();
 builder.Services.AddTransient<DemoExplorer>();
 builder.Services.AddSingleton<CommunityGraphGate>();
 builder.Services.AddTransient<CommunityGraph>();
 builder.Services.AddTransient<CommunityDocuments>();
+builder.Services.AddTransient<CommunityDiscovery>();
 builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<DemoBootstrapper>());
 builder.Services.AddHealthChecks()
     .AddCheck<ArcadeDbHealthCheck>("arcadedb", tags: ["ready"])
@@ -61,5 +64,6 @@ app.MapGet("/api/demo/story", async (string? persona, DemoExplorer explorer, Dem
 
 app.MapCommunityGraph();
 app.MapCommunityDocuments();
+app.MapCommunityDiscovery();
 app.MapDefaultEndpoints();
 app.Run();

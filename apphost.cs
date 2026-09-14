@@ -23,7 +23,17 @@ var arcadeDb = builder.AddContainer("arcadedb", "arcadedata/arcadedb", "26.9.1")
     .WithPersistentLifetime()
     .WithExternalHttpEndpoints();
 
+var ollama = builder.AddExecutable("local-models", "ollama", ".", "serve")
+    .WithHttpEndpoint(name: "http")
+    .WithEnvironment("OLLAMA_MODELS", Path.Combine(builder.AppHostDirectory, ".aspire", "models"))
+    .WithEnvironment("OLLAMA_NO_CLOUD", "1")
+    .WithHttpHealthCheck("/");
+ollama.WithEnvironment("OLLAMA_HOST", ReferenceExpression.Create(
+    $"127.0.0.1:{ollama.GetEndpoint("http").Property(EndpointProperty.TargetPort)}"));
+
 var embedding = builder.AddProject("embedding", "./src/CoffeeCommunity.Embedding/CoffeeCommunity.Embedding.csproj")
+    .WithEnvironment("Ollama__BaseUrl", ollama.GetEndpoint("http"))
+    .WaitFor(ollama)
     .WithHttpHealthCheck("/health");
 
 var api = builder.AddProject("api", "./src/CoffeeCommunity.Api/CoffeeCommunity.Api.csproj")

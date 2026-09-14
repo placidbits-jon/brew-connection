@@ -9,3 +9,4 @@ databases/
 backups/
 *.user
 *.suo
+**/__pycache__/

@@ -38,6 +38,8 @@ public sealed class DemoBootstrapper(
                         if (record.TryGetProperty("seedProfile", out var priorProfile) && priorProfile.GetString() == "scale") profile = "scale";
                         if (record.TryGetProperty("seedVersion", out var version) && version.GetString() == CommunitySchema.Version && record.TryGetProperty("seedComplete", out var complete) && complete.GetBoolean())
                         {
+                            if (!record.TryGetProperty("searchIndexVersion", out var searchVersion) || searchVersion.GetString() != CommunitySearchText.Version)
+                                await new CommunitySearchIndex(arcadeDb, embedding).RebuildAsync(cancellationToken);
                             readiness.Ready();
                             return;
                         }

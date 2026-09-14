@@ -232,6 +232,67 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+## Keyword search
+
+**ArcadeDB:** Lucene full-text index with BM25 relevance
+
+- Search the same canonical public text used to generate vectors.
+- Inspect phrase, fuzzy spelling, stemming, autocomplete, and more-like-this examples.
+
+**Activate demo:** [Match blueberry](http://localhost:4200/demo/discover?query=blueberry&mode=keyword&persona=maya-chen&availableOnly=true)
+
+**Action:** Keep `blueberry` in the search box and select **Keyword**.
+
+**Look for:** Ethiopia Blueberry Bloom ranks first. Blueberry Label Dark Roast also matches, despite its smoky profile. Summer Orchard is absent because its description uses berry nectar and blossom instead.
+
+---
+
+## Semantic search
+
+**ArcadeDB:** Indexed cosine neighbors over 768-dimensional local EmbeddingGemma vectors
+
+- Match related meanings, including descriptions without the literal query word.
+- Each result shows its actual cosine distance; lower is closer.
+
+**Activate demo:** [Find related meanings](http://localhost:4200/demo/discover?query=blueberry&mode=semantic&persona=maya-chen&availableOnly=true)
+
+**Action:** Select **Semantic**, keeping the query `blueberry`.
+
+**Look for:** Summer Orchard appears at rank 4 with zero keyword contribution. Blueberry Label Dark Roast is first: semantic retrieval adds related candidates, but this single-word query does not express a roast preference.
+
+---
+
+## Hybrid ranking
+
+**ArcadeDB:** Full-text and vector indexes feeding an explicit combined score
+
+- The API combines 0.35 × normalized BM25 and 0.65 × cosine similarity.
+- Contributions are visible instead of hidden behind a generated answer.
+
+**Activate demo:** [Combine words and meaning](http://localhost:4200/demo/discover?query=blueberry&mode=hybrid&persona=maya-chen&availableOnly=true)
+
+**Action:** Select **Hybrid**, keeping `blueberry`, then inspect the first result's score contributions.
+
+**Look for:** Ethiopia Blueberry Bloom moves from semantic rank 3 to hybrid rank 1. Summer Orchard remains in the results through its vector contribution.
+
+---
+
+## Find my next coffee
+
+**ArcadeDB:** Hybrid candidates plus actual acquaintance → favorite brew → available coffee paths
+
+- A qualifying community path adds 0.50 to the combined score.
+- Recommendations show who loved the brew and where its coffee is available.
+- The optional local language model only rewrites the query; database retrieval supplies every result and explanation.
+
+**Activate demo:** [Ask Maya's community](http://localhost:4200/demo/discover?query=blueberry&mode=personalized&persona=maya-chen&availableOnly=true)
+
+**Action:** Select **Personalized**, keeping `blueberry`. Read the community evidence on the first result.
+
+**Look for:** Priya's Honey Stonefruit moves from hybrid rank 5 to personalized rank 1. Its explanation follows Maya — MET → Priya — LOVED → a brew — USED_BATCH → this coffee, with an available vendor.
+
+---
+
 ## Compatibility checkpoint
 
 **ArcadeDB:** Version 26.9.1 with native and plugin query engines
