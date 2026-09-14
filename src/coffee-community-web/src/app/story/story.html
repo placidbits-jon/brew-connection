@@ -1,0 +1,66 @@
+<main>
+  <header>
+    <a class="brand" routerLink="/demo/story">
+      <span class="brand-mark">B/C</span>
+      <span>BREW CONNECTION<br><small>TECHCON COMMUNITY SPACE</small></span>
+    </a>
+    <span class="edition">DETROIT · 2026</span>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow"><span></span> ONE EVENT · MANY CONNECTIONS</div>
+    <h1>Remember the cups.<br><em>Find the people.</em></h1>
+    <p class="lede">A social companion for the coffee community—powered by one multi-model ArcadeDB database.</p>
+    <div class="hero-actions">
+      <label>
+        <span>Explore as</span>
+        <select [value]="selectedPersona()" (change)="selectedPersona.set($any($event.target).value)">
+          <option value="maya-chen">Maya Chen · attendee</option>
+          <option value="priya-nair">Priya Nair · brewer</option>
+          <option value="luis-ortega">Luis Ortega · roaster</option>
+        </select>
+      </label>
+      <a class="primary" [routerLink]="['/demo/passport', selectedPersona()]">Begin the story →</a>
+    </div>
+  </section>
+
+  <section class="system" aria-labelledby="system-title">
+    <div>
+      <p class="section-kicker">LIVE FOUNDATION</p>
+      <h2 id="system-title">One app. Seven data models.</h2>
+    </div>
+    <button class="text-button" (click)="showResources.set(!showResources())">
+      {{ showResources() ? 'Hide' : 'Reveal' }} Aspire resource state
+    </button>
+
+    @if (showResources()) {
+      <div class="resource-grid">
+        <article><span class="status-dot" [class.ready]="status()?.process === 'ready'"></span><strong>Angular + API</strong><small>{{ loading() ? 'checking' : status()?.process ?? 'unavailable' }}</small></article>
+        <article><span class="status-dot" [class.ready]="status()?.database === 'ready'"></span><strong>ArcadeDB {{ status()?.arcadeDbVersion }}</strong><small>database · {{ status()?.database ?? 'unavailable' }}</small></article>
+        <article><span class="status-dot" [class.ready]="status()?.schema === 'ready'"></span><strong>Demo schema</strong><small>migration + seed · {{ status()?.schema ?? 'unavailable' }}</small></article>
+        <article><span class="status-dot" [class.ready]="status()?.embedding === 'ready'"></span><strong>Local embeddings</strong><small>{{ status()?.embeddingProvider ?? 'unavailable' }}</small></article>
+      </div>
+      @if (status()?.error) { <p class="error">{{ status()?.error }}</p> }
+      <div class="resource-actions">
+        <button class="secondary" (click)="refresh()">Refresh status</button>
+        <button class="secondary danger" [disabled]="resetting()" (click)="reset()">{{ resetting() ? 'Resetting…' : 'Reset demo state' }}</button>
+      </div>
+    }
+  </section>
+
+  <section class="experiences" aria-labelledby="experience-title">
+    <p class="section-kicker">THE LIVE WALKTHROUGH</p>
+    <h2 id="experience-title">Choose a question worth answering.</h2>
+    <div class="experience-grid">
+      @for (experience of experiences; track experience.number) {
+        <a [routerLink]="experience.route">
+          <span class="number">{{ experience.number }}</span>
+          <span class="model">{{ experience.model }}</span>
+          <h3>{{ experience.title }}</h3>
+          <p>{{ experience.detail }}</p>
+          <span class="arrow">↗</span>
+        </a>
+      }
+    </div>
+  </section>
+</main>

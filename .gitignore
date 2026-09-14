@@ -1,0 +1,11 @@
+.DS_Store
+.aspire/
+**/bin/
+**/obj/
+**/node_modules/
+**/.angular/
+**/dist/
+databases/
+backups/
+*.user
+*.suo

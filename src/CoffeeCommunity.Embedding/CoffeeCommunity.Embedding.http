@@ -1,0 +1,6 @@
+@CoffeeCommunity.Embedding_HostAddress = http://localhost:5012
+
+GET {{CoffeeCommunity.Embedding_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

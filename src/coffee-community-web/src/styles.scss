@@ -1,0 +1,11 @@
+:root {
+  color-scheme: dark;
+  font-family: Avenir, 'Segoe UI', sans-serif;
+  background: #11110f;
+  color: #f7f3e8;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+button, select { font: inherit; }
+button { cursor: pointer; }

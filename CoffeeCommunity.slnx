@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CoffeeCommunity.Api/CoffeeCommunity.Api.csproj" />
+    <Project Path="src/CoffeeCommunity.Embedding/CoffeeCommunity.Embedding.csproj" />
+    <Project Path="src/CoffeeCommunity.ServiceDefaults/CoffeeCommunity.ServiceDefaults.csproj" />
+    <Project Path="src/CoffeeCommunity.TelemetrySimulator/CoffeeCommunity.TelemetrySimulator.csproj" />
+  </Folder>
+</Solution>
