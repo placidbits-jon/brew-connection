@@ -64,6 +64,12 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 - [Telemetry guide](docs/telemetry.md) explains the authored anomaly, simulation, lifecycle, and verification.
 - [Codes and locations guide](docs/keys-and-locations.md) covers durable lookup, counter restart behavior, and geospatial checks.
 
+## Phase 7 checkpoints
+
+- [Transactions](http://localhost:4200/demo/transactions?scenario=commit) demonstrate an atomic tasting, repeat-safe commit, and controlled rollback.
+- [Query lab](http://localhost:4200/demo/lab?view=queries) runs fixed read-only queries with actual parameters, records, timing, and plans.
+- [Transaction guide](docs/transactions.md) and [query lab guide](docs/query-lab.md) describe operation identities, proof boundaries, and verification.
+
 If Aspire reports that DCP cannot load a self-signed root CA from the local developer certificate, start with the process-local workaround:
 
 ```bash

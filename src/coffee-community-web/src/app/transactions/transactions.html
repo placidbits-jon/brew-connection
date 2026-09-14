@@ -1,0 +1,147 @@
+<main>
+  <header>
+    <a routerLink="/demo/story">B/C · BREW CONNECTION</a
+    ><a routerLink="/demo/lab" [queryParams]="{ view: 'queries' }">Open query lab →</a>
+  </header>
+  <p class="kicker">ONE TASTING · ONE ATOMIC CHANGE</p>
+  <h1>All of the tasting. Or none of it.</h1>
+  <p>Create a brew, its recipe and coffee links, a tasting, and a public note together.</p>
+  <nav aria-label="Transaction scenarios">
+    <a
+      routerLink="/demo/transactions"
+      [queryParams]="{ scenario: 'commit' }"
+      [class.selected]="scenario() === 'commit'"
+      >Successful tasting</a
+    ><a
+      routerLink="/demo/transactions"
+      [queryParams]="{ scenario: 'rollback' }"
+      [class.selected]="scenario() === 'rollback'"
+      >Controlled failure</a
+    >
+  </nav>
+  <section class="action">
+    <div>
+      <h2>
+        {{ scenario() === 'rollback' ? 'Stop halfway through.' : 'Save the complete tasting.' }}
+      </h2>
+      <p>
+        {{
+          scenario() === 'rollback'
+            ? 'Write part of a separate tasting, then deliberately fail before committing.'
+            : 'Use the same operation identity on retry, so the tasting is created once.'
+        }}
+      </p>
+    </div>
+    <button (click)="run()" [disabled]="busy() || loading() || !data()">
+      {{
+        busy()
+          ? 'Running transaction…'
+          : scenario() === 'rollback'
+            ? 'Trigger halfway failure'
+            : 'Run successful tasting'
+      }}
+    </button>
+  </section>
+  @if (error()) {
+    <p role="alert" class="error">{{ error() }}</p>
+  }
+  @if (loading()) {
+    <p role="status">Reading stored state…</p>
+  }
+  <button class="refresh" (click)="refresh()" [disabled]="busy()">Refresh stored state</button>
+  @if (data(); as d) {
+    <p class="outcome" role="status">
+      {{
+        ran()
+          ? d.outcome === 'rolled-back'
+            ? 'Rolled back'
+            : d.outcome === 'already-committed'
+              ? 'Already committed — no duplicate tasting'
+              : 'Committed'
+          : 'Current stored state'
+      }}
+    </p>
+    @if (ran() && d.outcome === 'rolled-back' && unchanged()) {
+      <p class="proof">All graph and document counts unchanged</p>
+    }
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Record / relationship</th>
+            <th>Before</th>
+            <th>Inside transaction</th>
+            <th>After</th>
+            <th>Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.type) {
+            <tr>
+              <th>{{ row.type }}</th>
+              <td>{{ row.before }}</td>
+              <td>{{ row.staged ?? '—' }}</td>
+              <td>{{ row.after }}</td>
+              <td>{{ row.delta > 0 ? '+' : '' }}{{ row.delta }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">
+      “Inside transaction” is a captured read of staged writes. “After” is read after commit or
+      rollback.
+    </p>
+    @if (d.steps.length) {
+      <h2>What happened</h2>
+      <ol class="steps">
+        @for (step of d.steps; track $index) {
+          <li>{{ step }}</li>
+        }
+      </ol>
+    }
+    <section class="comparison">
+      <h2>One record, two query languages</h2>
+      @if (d.sameRecord) {
+        <p class="proof">SQL and Cypher returned the same record ID.</p>
+      } @else {
+        <p>
+          No shared committed tasting is shown in this receipt. Run the successful tasting to
+          compare its reads.
+        </p>
+      }
+      <div class="reads">
+        <article>
+          <h3>SQL</h3>
+          <pre>{{ d.sql | json }}</pre>
+        </article>
+        <article>
+          <h3>Cypher</h3>
+          <pre>{{ d.cypher | json }}</pre>
+        </article>
+      </div>
+      <a routerLink="/demo/lab" [queryParams]="{ view: 'queries', example: 'sql-transaction-brew' }"
+        >Inspect the committed tasting in the query lab →</a
+      >
+    </section>
+    <details>
+      <summary>All checked counts and record snapshots</summary>
+      <h3>Before</h3>
+      <pre>{{ d.before | json }}</pre>
+      <h3>Inside transaction</h3>
+      <pre>{{ d.staged | json }}</pre>
+      <h3>After</h3>
+      <pre>{{ d.after | json }}</pre>
+    </details>
+    <details>
+      <summary>Inspect transaction statements</summary>
+      @for (query of d.queries; track $index) {
+        <h3>{{ query.label }}</h3>
+        <small>{{ query.language }}</small>
+        <pre>{{ query.command }}</pre>
+        <pre>{{ query.parameters | json }}</pre>
+      }
+    </details>
+  }
+  <footer><a routerLink="/demo/story">← Back to the story</a></footer>
+</main>

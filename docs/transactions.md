@@ -1,0 +1,13 @@
+# Tasting transactions
+
+Open `/demo/transactions`. **Run successful tasting** creates **Transaction Blueberry V60** (`transaction-blueberry-v60`) together with Priya's `BREWED` edge, its Ethiopia Blueberry Bloom `USED_BATCH` edge, `USED_RECIPE` pinned to immutable `blueberry-v60-v2`, Maya's `TASTED` edge, and her linked public `Note`. All six records are written using SQL in one ArcadeDB HTTP transaction session.
+
+**Trigger halfway failure** uses a separate stable identity (`transaction-rollback-v60`). It actually stages the Brew, `BREWED`, and `USED_BATCH`, captures their in-session counts and record IDs, then triggers the controlled halfway failure before the remaining writes. An acknowledged HTTP rollback is followed by fresh reads of every durable vertex, document and edge type in the demo schema. Counts must equal their before values and this operation's Brew, Note and edges must be absent. The staged IDs are evidence of uncommitted writes; they are not durable records.
+
+The page reads the committed SQL-created Brew immediately using `MATCH (b:Brew {slug:$slug}) RETURN elementId(b) AS rid, b.slug AS slug, b.name AS name`. Its actual ArcadeDB RID must equal the SQL `@rid`. There is no copy or synchronization process. Inspectors display every executed SQL/Cypher statement and parameters; HTTP transaction boundary actions appear in the step log.
+
+`GET /api/demo/transactions` reads current durable state, including after a page reload. `POST /api/demo/transactions/run` accepts only `{"scenario":"commit"}` or `{"scenario":"rollback"}`; additional keys and arbitrary statements receive 400. Each scenario has a fixed operation ID. The successful Brew's unique slug serves as the durable retry identity; concurrent and lost-response retries return the existing committed operation without duplicating edges or notes. A database reset removes this identity and permits a fresh rehearsal. A commit response failure returns an explicit unknown outcome, never a claimed rollback; reload or retry the same operation to reconcile.
+
+This is a single local API demo. Its shared graph gate serializes mutations and excludes seed/reset while a transaction runs. Redis counters and native time-series ingestion are outside this transaction demonstration and its durable graph/document counts. No schema or seed change is needed.
+
+Run `python3 scripts/verify-transactions.py --api-url http://localhost:5130` against the running story seed. It checks actual staged writes, all graph/document counts before/after rollback (also after the successful scenario), concurrent retries, pinned revision, SQL/Cypher record identity, reload and strict request validation. It can run again without resetting.

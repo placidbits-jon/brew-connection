@@ -373,20 +373,83 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+## One ACID tasting transaction
+
+**ArcadeDB:** A single HTTP transaction session spanning SQL vertex, document, and edge writes
+
+- The brew, public note, and four relationships commit together.
+- The recipe link pins the immutable revision used for the tasting.
+- Repeating the same operation does not duplicate the tasting.
+
+**Activate demo:** [Commit the complete tasting](http://localhost:4200/demo/transactions?scenario=commit)
+
+**Action:** Click **Run successful tasting**.
+
+**Look for:** **Committed** and a +1 change for Brew, Note, BREWED, USED_BATCH, USED_RECIPE, and TASTED. SQL and Cypher show the same new record ID. A repeat reports **Already committed** with zero new changes.
+
+---
+
+## What if it fails halfway?
+
+**ArcadeDB:** Rollback of staged vertex and relationship writes
+
+- The failure scenario uses a separate tasting identity.
+- Staged records are visible inside the transaction before rollback.
+- Fresh reads verify the rollback after it is acknowledged.
+
+**Activate demo:** [Trigger the controlled failure](http://localhost:4200/demo/transactions?scenario=rollback)
+
+**Action:** Click **Trigger halfway failure**.
+
+**Look for:** **Inside transaction** shows one extra Brew, BREWED edge, and USED_BATCH edge. **After** matches **Before** for every checked graph/document type, and the page reports **Rolled back**. No failed-tasting record survives.
+
+---
+
+## The same record, through another language
+
+**ArcadeDB:** SQL and Cypher over the same stored graph vertex
+
+- SQL creates the transaction's Brew.
+- Cypher reads it immediately without a copy or synchronization job.
+- SQL `@rid` and Cypher `elementId()` identify the same record.
+
+**Activate demo:** [Read the committed tasting](http://localhost:4200/demo/lab?view=queries&example=sql-transaction-brew)
+
+**Action:** Click **Run query** and note the RID. Select **Committed Brew through Cypher**, then click **Run query** again.
+
+**Look for:** Both reads return **Transaction Blueberry V60** with exactly the same RID. If no tasting has been committed yet, the lab gives an explicit empty-state message.
+
+---
+
+## Inspect the query plan
+
+**ArcadeDB:** Native SQL EXPLAIN for a fixed full-text query
+
+- The catalog supplies bounded, read-only statements and fixed parameters.
+- Each run shows actual records, database round-trip time, and plan availability.
+- SQL, Cypher, Redis, vector, time-series, and geospatial examples share one lab.
+
+**Activate demo:** [Inspect the full-text plan](http://localhost:4200/demo/lab?view=queries&example=fulltext-coffee)
+
+**Action:** Click **Run query** and read **Execution plan**.
+
+**Look for:** The blueberry query returns Ethiopia Blueberry Bloom and an actual **FETCH FROM INDEXED FUNCTION SEARCH_INDEX** plan. The lab shows the fixed `blueberry` parameter and measured execution time; it does not accept arbitrary statements.
+
+---
+
 ## Compatibility checkpoint
 
 **ArcadeDB:** Version 26.9.1 with native and plugin query engines
 
-- Cypher graph writes and traversals
-- Nested documents and indexed key lookup
-- BM25 full-text and 768-dimensional vector search
-- Redis-style counters, time-series aggregation, geospatial distance, and HTTP transactions
+- Seven fixed runtime reads cover SQL, Cypher, Redis GET, full-text, vector, time-series, and geospatial queries.
+- Each result includes its returned record count and available native plan.
+- Transaction, mutation, and retention checks remain separate demonstrations.
 
 **Activate demo:** [Open the query lab](http://localhost:4200/demo/lab?view=compatibility)
 
 **Action:** Select **Run compatibility summary**.
 
-**Look for:** Every capability reports `Passed` and identifies ArcadeDB 26.9.1.
+**Look for:** Seven `read-completed` results with actual record counts. The displayed limitations explain that this read-only summary does not test transaction writes, rollback, Redis increments, or retention.
 
 ---
 

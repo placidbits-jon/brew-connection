@@ -1,42 +1,232 @@
 <main>
-  <a routerLink="/demo/story">← Back to the story</a>
-  <p class="eyebrow">QUERY LAB · SCHEMA</p>
-  <h1>Schema explorer</h1>
-  <p>Explore the types, properties, and indexes in the current ArcadeDB database.</p>
-  @if (view !== 'schema') {
-    <p class="notice">Curated query and compatibility actions arrive in Phase 7. The live schema is available below.</p>
-  }
-  @if (error()) {
-    <p role="alert">The schema could not be loaded. Check resource readiness on the story screen.</p>
-    <button (click)="load()">Retry</button>
-  } @else if (schema(); as data) {
-    <p>{{ data.types.length }} types · {{ data.indexes.length }} indexes</p>
-    <div class="explorer">
-      <nav aria-label="Database types">
-        @for (type of data.types; track type.name) {
-          <button [class.selected]="selected() === type.name" [attr.aria-pressed]="selected() === type.name" (click)="selected.set(type.name)">
-            {{ type.name }} <small>{{ type.type === 't' ? 'time-series' : type.type }}</small>
-          </button>
-        }
-      </nav>
-      <section aria-live="polite">
-        @if (detail(); as type) {
-          <h2>{{ type.name }}</h2>
-          <h3>Properties</h3>
-          @if (type.properties?.length) {
-            <table><thead><tr><th>Name</th><th>Type</th></tr></thead><tbody>
-              @for (property of type.properties; track property.name) {
-                <tr><td>{{ property.name }}</td><td>{{ property.type }}</td></tr>
+  <header>
+    <a routerLink="/demo/story">B/C · BREW CONNECTION</a
+    ><a routerLink="/demo/transactions">Tasting transaction →</a>
+  </header>
+  <p class="eyebrow">QUERY LAB · {{ view() === 'schema' ? 'SCHEMA' : 'CURATED READS' }}</p>
+  <h1>{{ view() === 'schema' ? 'Schema explorer' : 'One database. Several query languages.' }}</h1>
+  <nav class="lab-views" aria-label="Lab views">
+    <a
+      routerLink="/demo/lab"
+      [queryParams]="{ view: 'queries' }"
+      [class.active]="view() === 'queries'"
+      >Query catalog</a
+    ><a
+      routerLink="/demo/lab"
+      [queryParams]="{ view: 'schema' }"
+      [class.active]="view() === 'schema'"
+      >Schema explorer</a
+    ><a
+      routerLink="/demo/lab"
+      [queryParams]="{ view: 'compatibility' }"
+      [class.active]="view() === 'compatibility'"
+      >Compatibility summary</a
+    >
+  </nav>
+  @if (view() === 'schema') {
+    <p>Explore the types, properties, and indexes in the current ArcadeDB database.</p>
+    @if (schemaError()) {
+      <p role="alert">
+        The schema could not be loaded. Check resource readiness on the story screen.
+      </p>
+      <button (click)="load()">Retry</button>
+    } @else if (schema(); as data) {
+      <p>{{ data.types.length }} types · {{ data.indexes.length }} indexes</p>
+      <div class="explorer">
+        <nav aria-label="Database types">
+          @for (type of data.types; track type.name) {
+            <button
+              [class.selected]="selected() === type.name"
+              [attr.aria-pressed]="selected() === type.name"
+              (click)="selected.set(type.name)"
+            >
+              {{ type.name }} <small>{{ type.type === 't' ? 'time-series' : type.type }}</small>
+            </button>
+          }
+        </nav>
+        <section aria-live="polite">
+          @if (detail(); as type) {
+            <h2>{{ type.name }}</h2>
+            <h3>Properties</h3>
+            @if (type.properties?.length) {
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (property of type.properties; track property.name) {
+                    <tr>
+                      <td>{{ property.name }}</td>
+                      <td>{{ property.type }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <p>No declared properties. Inspect metadata for native type configuration.</p>
+            }
+            <h3>Indexes</h3>
+            @for (index of indexes(); track index.name) {
+              <article>
+                <strong>{{ index.name }}</strong>
+                <p>{{ index.type }}{{ index.unique ? ' · unique' : '' }}</p>
+                <pre>{{ index | json }}</pre>
+              </article>
+            } @empty {
+              <p>No secondary indexes on this type.</p>
+            }
+            <details>
+              <summary>Full type metadata</summary>
+              <pre>{{ type | json }}</pre>
+            </details>
+          } @else {
+            <p>Select a type to inspect its properties and indexes.</p>
+          }
+        </section>
+      </div>
+    } @else {
+      <p role="status">Loading schema…</p>
+    }
+  } @else {
+    <p>
+      Select a read-only example to inspect its language, parameters, records, and execution plan.
+    </p>
+    @if (error()) {
+      <p role="alert" class="error">{{ error() }}</p>
+      @if (!catalog()) {
+        <button (click)="load()">Retry catalog</button>
+      }
+    }
+    @if (catalog(); as data) {
+      <div class="explorer">
+        <nav aria-label="Query examples">
+          @for (item of data.examples; track item.id) {
+            <button
+              (click)="choose(item.id)"
+              [class.selected]="selectedId() === item.id"
+              [attr.aria-pressed]="selectedId() === item.id"
+            >
+              {{ item.label }}<small>{{ item.language }}</small>
+            </button>
+          }
+        </nav>
+        <section>
+          @if (example(); as query) {
+            <div class="query-heading">
+              <div>
+                <h2>{{ query.label }}</h2>
+                <span class="language">{{ query.language }}</span>
+              </div>
+              <button class="run" (click)="run()" [disabled]="busy()">
+                {{
+                  busy()
+                    ? 'Running…'
+                    : query.id === 'compatibility-summary'
+                      ? 'Run compatibility summary'
+                      : 'Run query'
+                }}
+              </button>
+            </div>
+            <p>{{ query.description }}</p>
+            <article>
+              <h3>Statement</h3>
+              <pre>{{ query.command }}</pre>
+              <h3>
+                {{ query.id === 'vector-coffee' ? 'Embedding input settings' : 'Fixed parameters' }}
+              </h3>
+              <pre>{{ query.parameters | json }}</pre>
+            </article>
+            @if (execution(); as result) {
+              <p class="execution" role="status">
+                {{ result.recordCount }} records · {{ result.executionMs | number: '1.1-2' }} ms
+                {{
+                  result.id === 'compatibility-summary' ? 'summary elapsed' : 'database round trip'
+                }}
+                · {{ result.language }}
+              </p>
+              @if (result.emptyMessage) {
+                <p class="notice">{{ result.emptyMessage }}</p>
               }
-            </tbody></table>
-          } @else { <p>No declared properties. Inspect metadata for native type configuration.</p> }
-          <h3>Indexes</h3>
-          @for (index of indexes(); track index.name) {
-            <article><strong>{{ index.name }}</strong><p>{{ index.type }}{{ index.unique ? ' · unique' : '' }}</p><pre>{{ index | json }}</pre></article>
-          } @empty { <p>No secondary indexes on this type.</p> }
-          <details><summary>Full type metadata</summary><pre>{{ type | json }}</pre></details>
-        } @else { <p>Select a type to inspect its properties and indexes.</p> }
-      </section>
-    </div>
-  } @else { <p role="status">Loading schema…</p> }
+              @if (result.checks; as checks) {
+                <div class="checks">
+                  @for (check of checks; track check.id) {
+                    <article>
+                      <h3>{{ check.label }}</h3>
+                      <p>
+                        {{ check.language }} · {{ check.recordCount }} records ·
+                        {{ check.executionMs | number: '1.1-2' }} ms
+                      </p>
+                      <details>
+                        <summary>Check results and plan</summary>
+                        <pre>{{ check.records | json }}</pre>
+                        <pre>{{ check.plan.text }}</pre>
+                      </details>
+                    </article>
+                  }
+                </div>
+              }
+              <div class="result-table">
+                <table>
+                  <thead>
+                    <tr>
+                      @for (column of columns(); track column) {
+                        <th>{{ column }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of result.records; track $index) {
+                      <tr>
+                        @for (column of columns(); track column) {
+                          <td>{{ cell(row, column) }}</td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <article class="plan">
+                <h3>Execution plan · {{ result.plan.status }}</h3>
+                @if (result.plan.command) {
+                  <pre>{{ result.plan.command }}</pre>
+                }
+                <pre>{{ result.plan.text }}</pre>
+              </article>
+              <details class="raw">
+                <summary>Executed statement, parameters and raw records</summary>
+                <pre>{{ result.command }}</pre>
+                <pre>{{ result.parameters | json }}</pre>
+                <pre>{{ result.records | json }}</pre>
+              </details>
+              @if (result.limitations?.length) {
+                <ul class="limitations">
+                  @for (limit of result.limitations; track $index) {
+                    <li>{{ limit }}</li>
+                  }
+                </ul>
+              }
+            }
+          } @else {
+            <p role="alert">
+              This example is not in the catalog. Choose one of the listed queries.
+            </p>
+          }
+        </section>
+      </div>
+      <details class="scope">
+        <summary>What this lab runs</summary>
+        <ul>
+          @for (limit of data.limitations; track $index) {
+            <li>{{ limit }}</li>
+          }
+        </ul>
+      </details>
+    } @else if (!error()) {
+      <p role="status">Loading query catalog…</p>
+    }
+  }
+  <footer><a routerLink="/demo/story">← Back to the story</a></footer>
 </main>

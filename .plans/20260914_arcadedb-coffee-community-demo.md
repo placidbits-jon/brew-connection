@@ -293,14 +293,14 @@ All 35 Angular tests and the production Angular build passed. Phase 4 document, 
 
 ## Phase 7: Transactions, Polyglot Queries, and Demo Lab
 
-Status: Not started
+Status: Complete
 
-- [ ] Implement `/demo/transactions` with a successful tasting transaction and a controlled halfway failure that rolls back all durable changes.
-- [ ] Implement `/demo/lab` with curated, read-only SQL, Cypher, Redis, vector, full-text, time-series, and geospatial examples.
-- [ ] Display the selected query language, parameter values, returned records, execution time, and safe query-plan output.
-- [ ] Demonstrate that records created through one query language are immediately visible through another supported language.
-- [ ] Prevent arbitrary mutating statements from being submitted through the demo lab.
-- [ ] Add slides for “one ACID transaction,” “rollback,” “same data through multiple languages,” and “inspect the query plan.”
+- [x] Implement `/demo/transactions` with a successful tasting transaction and a controlled halfway failure that rolls back all durable changes.
+- [x] Implement `/demo/lab` with curated, read-only SQL, Cypher, Redis, vector, full-text, time-series, and geospatial examples.
+- [x] Display the selected query language, parameter values, returned records, execution time, and safe query-plan output.
+- [x] Demonstrate that records created through one query language are immediately visible through another supported language.
+- [x] Prevent arbitrary mutating statements from being submitted through the demo lab.
+- [x] Add slides for “one ACID transaction,” “rollback,” “same data through multiple languages,” and “inspect the query plan.”
 
 ### Verification Plan
 
@@ -311,7 +311,19 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Implemented `/demo/transactions` with separate authored commit and rollback identities. The successful SQL transaction creates `transaction-blueberry-v60`, a public linked Note, Priya's BREWED edge, USED_BATCH, USED_RECIPE pinned to immutable revision 2, and Maya's TASTED edge. All six records share one ArcadeDB HTTP transaction session. The controlled failure stages a separate Brew and two edges, captures their actual in-session counts/IDs, then rolls back and verifies fresh graph/document counts and the absence of its records. The proof deliberately excludes Redis and native time-series storage, which are outside this transaction demonstration. No schema or seed migration was required.
+
+A unique Brew slug and operation ID provide durable idempotence for repeated and concurrent requests. A lost commit acknowledgement returns an explicit unknown outcome; it never claims rollback. Reload and retry use the same identity to reconcile current state. Repeated/concurrent retry behavior was tested; network acknowledgement loss was not fault-injected. Post-commit SQL `@rid` and native Cypher `elementId(b)` return the same stored record ID. Cypher `id(b)` was observed returning a numeric internal ID and is not used for this comparison.
+
+Expanded `/demo/lab` with ten catalog entries: seeded SQL/Cypher reads, optional SQL/Cypher reads of the committed tasting, Redis GET, Lucene full-text, 768-dimensional vector neighbors, native time-series samples, geospatial containment/distance, and a seven-read compatibility summary. The existing `?view=schema` explorer remains available and updates on route navigation. Execution shows actual language, statement, parameters, records, database round-trip time, and native SQL EXPLAIN output. Vector input settings are distinguished from the actual generated embedding parameters. Cypher plan unavailability and Redis's lack of a SQL plan are explicit. Compatibility reports completed runtime reads and limitations; it does not claim that read queries prove transaction writes, durability, Redis mutation, or retention.
+
+The lab accepts only a fixed catalog ID, with a 1,024-byte body bound including chunked bodies. It rejects arbitrary statements, language/parameter overrides, unknown IDs, duplicate/extra JSON members, malformed JSON, and query-string overrides. Every database command is fixed server-side and read-only, including Redis GET through the existing HTTP executor. Reads share the graph/reset gate. UI context guards discard late transaction or query responses after navigation, and query errors leave catalog controls usable. Empty optional transaction reads explain how to create the record.
+
+Added four transaction/query-plan Obsidian slides, updated the legacy compatibility slide to match its read-only evidence, and added `docs/transactions.md`, `docs/query-lab.md`, and README checkpoints. Live verification on 2026-09-14 passed actual staged rollback writes with all 34 checked graph/document type counts unchanged; exactly one Brew, Note, and four correctly directed/pinned edges on commit; four concurrent retries without duplicates; matching SQL/Cypher RIDs; and strict transaction input rejection. All ten lab entries passed against clean and committed story data, with actual plans, 768-value vector parameters, strict rejection cases, and unchanged schema record counts and Redis value. Scoped code review found no blocking implementation issue; proof wording was narrowed to the tested scope.
+
+Real Chromium rehearsal passed all four new slides, successful commit and repeat, rollback after commit, cross-language identity, full-text index plan, seven-read compatibility summary, preserved schema inspection, empty/unknown-example recovery, route reload, and mobile layout. All 40 Angular tests passed, including stale transaction/query responses, failed query recovery, and the prior schema checkpoint.
+
+Phase 4 document, Phase 3 graph, Phase 5 discovery, Phase 6 key/value/geospatial and telemetry, and Phase 2 seed/checkpoint regressions passed. The production Angular build and final .NET solution build passed (zero .NET warnings/errors); `git diff --check` passed. Story data was restored, including 6,000 telemetry samples, and Aspire stopped. Phase 6 was committed as `a687ecf`; Phase 7 changes remain uncommitted and Phase 8 is untouched.
 
 ## Phase 8: Slide-Link Automation and Rehearsal
 

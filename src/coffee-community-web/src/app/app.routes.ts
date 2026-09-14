@@ -1,3 +1,4 @@
+import { Transactions } from './transactions/transactions';
 import { EventTools } from './event-tools/event-tools';
 import { Telemetry } from './telemetry/telemetry';
 import { Documents } from './documents/documents';
@@ -8,6 +9,7 @@ import { Lab } from './lab/lab';
 import { Community } from './community/community';
 
 export const routes: Routes = [
+  { path: 'demo/transactions', component: Transactions, title: 'Transactions | Brew Connection' },
   {
     path: 'demo/lookup',
     component: EventTools,
