@@ -83,3 +83,15 @@ ASPIRE_DCP_USE_DEVELOPER_CERTIFICATE=false aspire start
 ```
 
 The disposable compatibility database proves the ArcadeDB features used throughout the planned demo without touching the persistent application database.
+
+## Phase 8 presentation checks
+
+The [presenter runbook](docs/presenter-runbook.md) includes startup, reset, recovery, a 17-minute speaking budget, and a slide-to-feature traceability table.
+
+```bash
+python3 scripts/validate-demo-deck.py
+python3 scripts/test-demo-deck.py
+npm --prefix src/coffee-community-web run test:slides
+```
+
+The browser suite requires running Aspire resources and Playwright Chromium (installation instructions are in the runbook). It resets the story once, follows all 26 slide actions in order, and writes a timestamped report. Reset again before presenting: the suite deliberately leaves its completed actions available for inspection.

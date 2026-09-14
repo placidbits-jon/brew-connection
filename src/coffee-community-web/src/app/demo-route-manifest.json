@@ -1,0 +1,17 @@
+{
+  "routes": [
+    "demo/transactions",
+    "demo/lookup",
+    "demo/map",
+    "demo/brews/:brewSlug",
+    "demo/pulse",
+    "demo/discover",
+    "demo/recipes/:recipeSlug",
+    "demo/coffee/:roastBatchSlug",
+    "demo/meet/:personSlug",
+    "demo/passport/:personSlug",
+    "demo/network/:personSlug",
+    "demo/lab",
+    "demo/story"
+  ]
+}

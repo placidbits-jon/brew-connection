@@ -1,3 +1,4 @@
+<!-- slide: title -->
 # Coffee, Community, and One Multi-Model Database
 
 ArcadeDB at a tech convention's community coffee space
@@ -6,6 +7,7 @@ ArcadeDB at a tech convention's community coffee space
 
 ---
 
+<!-- slide: connected-questions -->
 ## One event, many connected questions
 
 - Who did I meet, and why did I want to reconnect?
@@ -16,6 +18,7 @@ ArcadeDB at a tech convention's community coffee space
 
 ---
 
+<!-- slide: access-patterns -->
 ## One application, seven access patterns
 
 **ArcadeDB:** Graph, document, key/value, full-text, vector, time-series, and geospatial
@@ -27,6 +30,7 @@ ArcadeDB at a tech convention's community coffee space
 
 ---
 
+<!-- slide: local-architecture -->
 ## Local architecture
 
 ```text
@@ -40,6 +44,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: repeatable-local-stage -->
 ## A repeatable local stage
 
 **ArcadeDB:** Persistent container, HTTP API, migration marker, and deterministic seed
@@ -56,6 +61,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: community-record-types -->
 ## One community, many record types
 
 **ArcadeDB:** Vertex, edge, document, time-series, and specialized indexes
@@ -72,6 +78,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: repeatable-community-story -->
 ## A repeatable community story
 
 **ArcadeDB:** Deterministic vertices, attributed edges, and linked documents
@@ -88,6 +95,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: record-meeting -->
 ## Record a meeting
 
 **ArcadeDB:** Persistent badge lookup and an attributed `MET` edge
@@ -104,6 +112,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: coffee-passport -->
 ## Your coffee passport
 
 **ArcadeDB:** Traversals over tasting, love, meeting, and game edges
@@ -120,6 +129,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: rematch-candidates -->
 ## Who beat me?
 
 **ArcadeDB:** Game session vertices and scored `BEAT_IN_GAME` edges
@@ -136,6 +146,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: shortest-social-path -->
 ## The shortest social path
 
 **ArcadeDB:** Multi-hop traversal through the `MET` graph
@@ -152,6 +163,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: reconnect-targets -->
 ## People to reconnect with
 
 **ArcadeDB:** Attributed `WANTS_TO_RECONNECT` edges and shared interests
@@ -168,6 +180,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: structured-recipe -->
 ## A structured recipe
 
 **ArcadeDB:** A recipe vertex linked to a nested `RecipeRevision` document
@@ -184,6 +197,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: private-note -->
 ## A plain-text memory
 
 **ArcadeDB:** A note document with owner and subject links
@@ -200,6 +214,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: recipe-revision -->
 ## Publish without losing history
 
 **ArcadeDB:** Immutable revision documents and an atomic current-revision link
@@ -216,6 +231,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: bean-to-cup-provenance -->
 ## Bean-to-cup provenance
 
 **ArcadeDB:** Connected vertices, relationship attributes, and linked documents
@@ -232,6 +248,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: keyword-search -->
 ## Keyword search
 
 **ArcadeDB:** Lucene full-text index with BM25 relevance
@@ -247,6 +264,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: semantic-search -->
 ## Semantic search
 
 **ArcadeDB:** Indexed cosine neighbors over 768-dimensional local EmbeddingGemma vectors
@@ -262,6 +280,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: hybrid-ranking -->
 ## Hybrid ranking
 
 **ArcadeDB:** Full-text and vector indexes feeding an explicit combined score
@@ -277,6 +296,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: personalized-discovery -->
 ## Find my next coffee
 
 **ArcadeDB:** Hybrid candidates plus actual acquaintance → favorite brew → available coffee paths
@@ -293,6 +313,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: indexed-code-lookup -->
 ## One code, one community record
 
 **ArcadeDB:** Persistent uniquely indexed key/value documents
@@ -309,6 +330,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: transient-tasting-counter -->
 ## One more tasting
 
 **ArcadeDB:** Transient Redis `GET` and `INCR` commands through the HTTP executor
@@ -325,6 +347,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: pour-telemetry -->
 ## Watch the pour
 
 **ArcadeDB:** Native time-series ingestion and bounded timestamp/tag queries
@@ -341,6 +364,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: event-time-buckets -->
 ## The event, in time buckets
 
 **ArcadeDB:** Native time buckets, percentile, rate, and query-time downsampling
@@ -357,6 +381,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: nearby-coffee -->
 ## Nearby coffee, connected
 
 **ArcadeDB:** Indexed polygon containment, native distance in meters, and graph-linked vendor offers
@@ -373,6 +398,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: acid-tasting-transaction -->
 ## One ACID tasting transaction
 
 **ArcadeDB:** A single HTTP transaction session spanning SQL vertex, document, and edge writes
@@ -389,6 +415,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: transaction-rollback -->
 ## What if it fails halfway?
 
 **ArcadeDB:** Rollback of staged vertex and relationship writes
@@ -405,6 +432,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: polyglot-record -->
 ## The same record, through another language
 
 **ArcadeDB:** SQL and Cypher over the same stored graph vertex
@@ -421,6 +449,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: query-plan -->
 ## Inspect the query plan
 
 **ArcadeDB:** Native SQL EXPLAIN for a fixed full-text query
@@ -437,6 +466,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- demo: compatibility-checkpoint -->
 ## Compatibility checkpoint
 
 **ArcadeDB:** Version 26.9.1 with native and plugin query engines
@@ -453,9 +483,11 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+<!-- slide: closing -->
 ## Why this matters
 
 - The same coffee can be traversed, searched, ranked, charted, and located.
-- Full-text and vector indexes participate in the database's storage and transaction model.
-- The backend selects the best query model without translating data into another store.
+- One database removes synchronization jobs between graph, document, search, telemetry, and location stores.
+- The ACID demo commits or rolls back its graph and document writes together.
 - The live demo is reproducible from a clean local seed.
+- Redis counters are transient, telemetry retention is demonstrated separately, and measured rankings from the pinned local EmbeddingGemma model do not guarantee results for arbitrary queries.

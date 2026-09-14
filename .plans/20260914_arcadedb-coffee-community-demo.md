@@ -327,17 +327,17 @@ Phase 4 document, Phase 3 graph, Phase 5 discovery, Phase 6 key/value/geospatial
 
 ## Phase 8: Slide-Link Automation and Rehearsal
 
-Status: Not started
+Status: Complete (implementation and automated rehearsal)
 
-- [ ] Finalize `docs/arcadedb-coffee-demo.md` in the exact order of the 15-20 minute walkthrough.
-- [ ] Keep each feature slide focused on one audience takeaway and one activation action.
-- [ ] Add a closing slide covering operational simplification, avoided synchronization, ACID behavior, and appropriate limitations.
-- [ ] Add a checked-in validator that parses every `Activate demo` URL from the deck and verifies it against the Angular demo-route manifest.
-- [ ] Add a browser smoke test that opens each slide link from a clean story seed, performs the documented action, and asserts the expected visible result.
-- [ ] Add deck checks for missing `ArcadeDB`, `Activate demo`, `Action`, or `Look for` fields on feature slides.
-- [ ] Add a presenter runbook with startup, reset, fallback, timing, and recovery instructions.
-- [ ] Add a slide-to-feature traceability table to the runbook, including route, seed dependency, API endpoint, ArcadeDB capability, and automated test.
-- [ ] Rehearse the complete deck twice from a clean machine state and record actual duration and any manual recovery steps.
+- [x] Finalize `docs/arcadedb-coffee-demo.md` in the exact order of the 15-20 minute walkthrough.
+- [x] Keep each feature slide focused on one audience takeaway and one activation action.
+- [x] Add a closing slide covering operational simplification, avoided synchronization, ACID behavior, and appropriate limitations.
+- [x] Add a checked-in validator that parses every `Activate demo` URL from the deck and verifies it against the Angular demo-route manifest.
+- [x] Add a browser smoke test that opens each slide link from a clean story seed, performs the documented action, and asserts the expected visible result.
+- [x] Add deck checks for missing `ArcadeDB`, `Activate demo`, `Action`, or `Look for` fields on feature slides.
+- [x] Add a presenter runbook with startup, reset, fallback, timing, and recovery instructions.
+- [x] Add a slide-to-feature traceability table to the runbook, including route, seed dependency, API endpoint, ArcadeDB capability, and automated test.
+- [x] Rehearse the complete deck twice from a clean machine state and record actual duration and any manual recovery steps.
 
 ### Verification Plan
 
@@ -348,12 +348,25 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Finalized the 31-slide Obsidian deck with 26 uniquely identified feature activations and five introductory/closing slides. The closing slide states operational simplification, avoided synchronization, the demonstrated graph/document ACID boundary, transient counters, and measured local-model ranking limits. Added a concrete Angular route manifest and a validator that checks it against the real router, rejects fallback-only routes, malformed links/separators, duplicate IDs/query keys, and missing or blank feature fields. Its JSON contract drives an ordered browser suite with exact coverage for every feature title.
+
+The Playwright suite resets once and preserves earlier mutations for dependent slides. It performs visible actions and assertions for all 26 slides, including private-note visibility after the same-subject persona response, a newly requested telemetry replay, actual staged rollback counts, and shared SQL/Cypher IDs. It rejects visible error alerts and uncaught page errors; failures save rendered HTML and screenshots. Optional screenshot capture and timestamped per-slide reports support rehearsal evidence.
+
+Added `docs/presenter-runbook.md` with startup/dependency installation, reset before presentation and after tests, recovery/fallback, a 17-minute speaking budget, and 26-row route/seed/API/capability/test traceability. Two final automated rehearsals start from stopped Aspire services and clean story data; actual durations and cache assumptions are recorded in the runbook. These are automated interactions, not measured human narration or first-time model downloads.
+
+Native Obsidian 1.13.7 was launched from a portable build with an isolated temporary profile/vault. The default Slides theme clipped the long title; the new `docs/obsidian-snippets/coffee-demo.css` resolved it. All 31 slides fit a 1024 × 800 CSS viewport, one intended slide per separator, with next/back and keyboard navigation verified. All 26 native HTTP hrefs match the browser-tested deck. A presenter's spoken pacing and operating-system default-browser handoff remain local rehearsal checks.
+
+Review identified and fixed blank field parsing, the required post-smoke reset, and inaccurate wording about the real EmbeddingGemma model. Nine validator regression tests and all 40 Angular tests pass. The production Angular build and final .NET solution build passed (zero .NET warnings/errors). Story data was restored, including 6,000 telemetry samples, and Aspire and the temporary Obsidian process were stopped. `git diff --check` passed. Phase 7 was committed as `a288425`; Phase 8 remains uncommitted. The 17-minute speaking budget still needs a human presenter rehearsal.
 
 ## Final Recap
 
-_(write when all phases complete: summary of the entire piece of work)_
+All eight implementation phases are delivered: pinned ArcadeDB compatibility; Aspire and application foundations; deterministic graph/document/time-series seed; community graph actions; immutable recipes and linked notes/provenance; real local embeddings and explainable discovery; persistent lookup, transient counters, telemetry and geospatial queries; atomic tasting/rollback and the curated polyglot lab; and presentation validation, browser automation, native Slides styling, and the presenter runbook. The application uses the same stored records across capabilities and exposes the actual statements and relevant limits. Measured automated/native-rendering evidence is documented separately from the proposed speaking schedule.
 
 ## Deployment Plan
 
-_(write when all phases complete: step-by-step local startup, seeding, presentation, reset, and teardown instructions)_
+1. Install the README prerequisites and use Node 24.15.0. Install the web dependencies and Playwright Chromium as described in `docs/presenter-runbook.md`. First startup downloads the pinned local models; allow that preparation time before presenting.
+2. Start from the repository root with `aspire start`, then `aspire wait api` and `aspire wait web`. Use the documented process-local certificate workaround if required. Open `/demo/story` and reveal four ready indicators.
+3. Run `python3 scripts/validate-demo-deck.py`, `python3 scripts/test-demo-deck.py`, and `npm --prefix src/coffee-community-web run test:slides` against running services. Review its report; reset the story again after tests and immediately before presenting.
+4. Open the deck in an Obsidian vault, enable its Slides core plugin and the checked-in `coffee-demo` CSS snippet, and start the presentation. Follow the deck in order so recipe-publication and transaction dependencies are satisfied. Rehearse the proposed speaking schedule before a live audience.
+5. If data diverges, reset using the runbook's JSON POST or story-screen control and restart the affected story sequence. Use the runbook's resource recovery/fallback instructions; never edit records by hand during the demo.
+6. Restore the story seed after verification and stop resources with `aspire stop --non-interactive`. Database data and model caches persist for subsequent starts; transient counter behavior is explicitly different.
