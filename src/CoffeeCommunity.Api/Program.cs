@@ -16,6 +16,7 @@ builder.Services.AddSingleton<DemoBootstrapper>();
 builder.Services.AddTransient<DemoExplorer>();
 builder.Services.AddSingleton<CommunityGraphGate>();
 builder.Services.AddTransient<CommunityGraph>();
+builder.Services.AddTransient<CommunityDocuments>();
 builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<DemoBootstrapper>());
 builder.Services.AddHealthChecks()
     .AddCheck<ArcadeDbHealthCheck>("arcadedb", tags: ["ready"])
@@ -59,5 +60,6 @@ app.MapGet("/api/demo/story", async (string? persona, DemoExplorer explorer, Dem
 });
 
 app.MapCommunityGraph();
+app.MapCommunityDocuments();
 app.MapDefaultEndpoints();
 app.Run();

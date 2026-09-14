@@ -194,15 +194,15 @@ Verification on 2026-09-14: `scripts/verify-community-graph.py --reset` passed a
 
 ## Phase 4: Documents, Recipes, Notes, and Provenance
 
-Status: Not started
+Status: Complete
 
-- [ ] Implement structured recipe creation and immutable revision publishing.
-- [ ] Implement plain-text notes attached by links to people, brews, roast batches, recipes, and game sessions.
-- [ ] Implement coffee provenance from lot through roast, vendor, brew, recipe revision, and attendee reaction.
-- [ ] Implement `/demo/recipes/:recipeSlug` with nested recipe steps and revision comparison.
-- [ ] Implement `/demo/coffee/:roastBatchSlug` with an interactive provenance graph and document detail panels.
-- [ ] Demonstrate that graph vertices retain flexible document properties while explicit document records support embedded structures and revisions.
-- [ ] Add slides for “structured recipe,” “plain-text memory,” “recipe revision,” and “bean-to-cup provenance.”
+- [x] Implement structured recipe creation and immutable revision publishing.
+- [x] Implement plain-text notes attached by links to people, brews, roast batches, recipes, and game sessions.
+- [x] Implement coffee provenance from lot through roast, vendor, brew, recipe revision, and attendee reaction.
+- [x] Implement `/demo/recipes/:recipeSlug` with nested recipe steps and revision comparison.
+- [x] Implement `/demo/coffee/:roastBatchSlug` with an interactive provenance graph and document detail panels.
+- [x] Demonstrate that graph vertices retain flexible document properties while explicit document records support embedded structures and revisions.
+- [x] Add slides for “structured recipe,” “plain-text memory,” “recipe revision,” and “bean-to-cup provenance.”
 
 ### Verification Plan
 
@@ -213,7 +213,13 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Implemented `CommunityDocuments` and its API endpoints for structured recipe creation, immutable revision publication, typed linked notes, and coffee provenance. Publication validates the nested recipe, uses an expected-revision check plus content/author fingerprint for retry handling, and inserts the revision and advances `Recipe.currentRevision` in one HTTP transaction. It shares the graph/reset gate. Existing revision documents and `USED_RECIPE.revision` links remain unchanged. Explicit link-ID projections avoid ArcadeDB recursive serialization of the recipe/revision cycle. No schema or seed-version change was required.
+
+Added `/demo/recipes/:recipeSlug` with editable pour steps, equipment, grind, temperature, quantities, commentary, new-recipe creation, prior revision comparison, and nested document inspection. Added `/demo/coffee/:roastBatchSlug` with a selected-brew graph and clickable record panels, including the lot, roaster, vendor, brewer, roast profile, recipe, pinned revision, and tasting/love relationships. The graph uses actual relationship directions and associates the pinned revision with the brew rather than the recipe's mutable current link.
+
+Notes link owners and subjects for Person, Brew, RoastBatch, Recipe, and GameSession. API visibility includes public notes and the selected persona's private notes; private note text is excluded from searchText. The UI preserves the note subject during persona changes while clearing drafts, private data, and query details. It cancels stale reads and ignores late mutation responses from prior route/persona contexts; note retry keys also rotate when context changes. This remains a local demo persona model, not production authentication.
+
+Added the four requested Obsidian slides and `docs/recipe-documents.md`. Verification on 2026-09-14: document integration passed unchanged historical snapshots, four concurrent identical retries, competing publications with exactly one success and one conflict, nested validation errors, notes on all five subject types, private-body leak checks, and the original brew's pinned revision 2 after current revision 3. All 23 Angular tests passed, including persona-navigation races. Real Chromium rehearsal passed all four slides, nested editing/comparison, recipe creation/reload, same-subject note privacy, escaped plain text, graph selection, mobile layout, and query inspection. Scoped code review has no remaining findings. Phase 3 graph integration and Phase 2 seed/checkpoint regressions also passed. Final .NET solution and production Angular builds passed without warnings. Story data was restored and Aspire stopped. Search ranking and embedding updates remain Phase 5 work.
 
 ## Phase 5: Full-Text, Vector, and Graph-Aware Discovery
 

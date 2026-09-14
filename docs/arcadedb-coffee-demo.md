@@ -168,6 +168,70 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+## A structured recipe
+
+**ArcadeDB:** A recipe vertex linked to a nested `RecipeRevision` document
+
+- Steps retain timing, water amounts, and instructions together.
+- Equipment, grind, temperature, and commentary remain structured fields.
+- The vertex links the recipe into the community graph.
+
+**Activate demo:** [Open the Blueberry Bloom recipe](http://localhost:4200/demo/recipes/blueberry-v60?persona=maya-chen)
+
+**Action:** Select **Revision 1** in **Compare prior revision**, then inspect **Current nested recipe document**.
+
+**Look for:** Revision 2 with three pour steps, 300 grams of water, 93°C, and a 20-click grind setting.
+
+---
+
+## A plain-text memory
+
+**ArcadeDB:** A note document with owner and subject links
+
+- Notes can refer to a person, brew, roast batch, recipe, or game session.
+- Private memories belong to the selected demo persona.
+- Public notes can be shared without exposing private text.
+
+**Activate demo:** [Remember Maya's cup](http://localhost:4200/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen)
+
+**Action:** Set **About** to **Brew** and **Subject slug** to `blueberry-bloom-v60`, then click **Load subject notes**. Enter `Ask Priya about the sweeter finish.` in **Note**, leave visibility private, and click **Save note**. Switch **Demo persona** to Priya Nair.
+
+**Look for:** Maya sees the saved memory; Priya does not see Maya's private note for the same brew.
+
+---
+
+## Publish without losing history
+
+**ArcadeDB:** Immutable revision documents and an atomic current-revision link
+
+- Publication adds a document instead of overwriting the earlier recipe.
+- Comparison keeps earlier settings available.
+- Existing brews keep their original revision link.
+
+**Activate demo:** [Publish the next recipe revision](http://localhost:4200/demo/recipes/blueberry-v60?persona=maya-chen)
+
+**Action:** Change **Grind clicks** to `18` and click **Publish revision**. Select revision 2 in **Compare prior revision**.
+
+**Look for:** Current revision 3 uses 18 clicks; revision 2 still has 20 clicks and its original nested steps.
+
+---
+
+## Bean-to-cup provenance
+
+**ArcadeDB:** Connected vertices, relationship attributes, and linked documents
+
+- The origin lot connects to the roast, vendor, brewer, recipe, and taster.
+- Selecting a node reveals its stored properties.
+- The brew's pinned revision preserves what actually produced the cup.
+
+**Activate demo:** [Trace Blueberry Bloom](http://localhost:4200/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen)
+
+**Action:** Select the **Pinned revision 2** node for Priya's Blueberry Bloom V60.
+
+**Look for:** Ethiopia Guji Lot 17, Great Lakes Roasters, Great Lakes Coffee Table, Priya's brew, and Maya's reaction. The selected revision remains 2 even after publication advances the recipe to revision 3.
+
+---
+
 ## Compatibility checkpoint
 
 **ArcadeDB:** Version 26.9.1 with native and plugin query engines

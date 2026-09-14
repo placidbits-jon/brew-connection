@@ -1,9 +1,12 @@
+import { Documents } from './documents/documents';
 import { Routes } from '@angular/router';
 import { Story } from './story/story';
 import { Lab } from './lab/lab';
 import { Community } from './community/community';
 
 export const routes: Routes = [
+  { path: 'demo/recipes/:recipeSlug', component: Documents, data: {mode: 'recipes'}, title: 'Recipe workshop | Brew Connection' },
+  { path: 'demo/coffee/:roastBatchSlug', component: Documents, data: {mode: 'coffee'}, title: 'Bean to cup | Brew Connection' },
   { path: 'demo/meet/:personSlug', component: Community, data: {mode: 'meet'}, title: 'Meet someone | Brew Connection' },
   { path: 'demo/passport/:personSlug', component: Community, data: {mode: 'passport'}, title: 'Coffee passport | Brew Connection' },
   { path: 'demo/network/:personSlug', component: Community, data: {mode: 'network'}, title: 'My network | Brew Connection' },

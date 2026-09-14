@@ -40,6 +40,12 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 - [Community network](http://localhost:4200/demo/network/maya-chen?target=luis-ortega) explains introductions, shared interests, reconnects, and rematches.
 - [Graph rehearsal guide](docs/community-graph.md) covers slide order, game actions, and integration tests.
 
+## Phase 4 checkpoints
+
+- [Structured recipe](http://localhost:4200/demo/recipes/blueberry-v60?persona=maya-chen) supports nested editing, revision publishing, and comparison.
+- [Coffee provenance](http://localhost:4200/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen) connects the origin, people, and pinned recipe revision.
+- [Document rehearsal guide](docs/recipe-documents.md) covers notes, persona visibility, and verification.
+
 If Aspire reports that DCP cannot load a self-signed root CA from the local developer certificate, start with the process-local workaround:
 
 ```bash
