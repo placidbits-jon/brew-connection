@@ -1,0 +1,279 @@
+<main>
+  <header>
+    <a routerLink="/demo/story">B/C · BREW CONNECTION</a>
+    <nav>
+      <a routerLink="/demo/lookup">Code lookup</a><a routerLink="/demo/pulse">Event pulse</a
+      ><a routerLink="/demo/map">Nearby coffee</a>
+    </nav>
+  </header>
+  <p class="kicker">
+    {{
+      mode() === 'brew'
+        ? 'SIMULATED SIGNALS · REAL RECIPE TARGETS'
+        : 'TRANSIENT COUNTS · DURABLE EVENT HISTORY'
+    }}
+  </p>
+  <h1>{{ mode() === 'brew' ? 'Watch the pour.' : 'The community, over time.' }}</h1>
+  @if (loading()) {
+    <p role="status">Loading telemetry…</p>
+  }
+  @if (error()) {
+    <p role="alert" class="error">{{ error() }}</p>
+    <button (click)="refresh()">Try again</button>
+  }
+  @if (actionError()) {
+    <p role="alert" class="error">{{ actionError() }}</p>
+  }
+  @if (brew(); as data) {
+    <section class="intro">
+      <div>
+        <h2>{{ data.brew.name }}</h2>
+        <p>
+          Brewer <a [routerLink]="['/demo/passport', data.brewer.slug]">{{ data.brewer.name }}</a> ·
+          <a [routerLink]="['/demo/recipes', data.recipe.slug]">{{ data.recipe.name }}</a> · pinned
+          revision {{ data.recipeRevision?.revision ?? 2 }}
+        </p>
+      </div>
+      <button (click)="replay()" [disabled]="busy() || data.status === 'queued'">
+        {{
+          busy()
+            ? 'Starting…'
+            : data.status === 'queued'
+              ? 'Simulation queued…'
+              : 'Replay simulation'
+        }}
+      </button>
+    </section>
+    <p>
+      Run: {{ data.runId }} · {{ data.status }} ·
+      {{ data.sampleCount ?? data.samples.length }} samples.
+      <a [routerLink]="['/demo/brews', data.brew.slug]">Return to seeded series</a>
+    </p>
+    <p>{{ data.targetDescription }}</p>
+    <div class="legend">
+      <span class="actual">━ Measured</span><span class="target">┄ Target</span>
+    </div>
+    <div class="charts">
+      <section>
+        <h3>Water weight · grams</h3>
+        <svg
+          viewBox="0 0 800 260"
+          role="img"
+          aria-label="Measured water and pinned recipe target over 60 seconds"
+        >
+          <path d="M48 35V220H748" class="axis" />
+          <text x="6" y="45">300g</text>
+          <text x="15" y="220">0</text>
+          <text x="48" y="246">0s</text>
+          <text x="716" y="246">59s</text>
+          <polyline [attr.points]="line('targetWaterGrams', 300)" class="target-line" />
+          <polyline [attr.points]="line('waterGrams', 300)" class="actual-line" />
+          <path [attr.d]="'M' + (48 + (second() * 700) / 59) + ' 35V220'" class="cursor" />
+        </svg>
+      </section>
+      <section>
+        <h3>Pour rate · grams per second</h3>
+        <svg
+          viewBox="0 0 800 260"
+          role="img"
+          aria-label="Flow spike at 30 seconds compared with target"
+        >
+          <path d="M48 35V220H748" class="axis" />
+          <text x="2" y="45">12g/s</text>
+          <text x="15" y="220">0</text>
+          <text x="48" y="246">0s</text>
+          <text x="716" y="246">59s</text>
+          <polyline [attr.points]="line('targetFlowRate', 12)" class="target-line" />
+          <polyline [attr.points]="line('flowRate', 12)" class="actual-line" />
+          <path [attr.d]="'M' + (48 + (second() * 700) / 59) + ' 35V220'" class="cursor" />
+        </svg>
+      </section>
+    </div>
+    <label class="slider"
+      >Inspect second: {{ second()
+      }}<input
+        aria-label="Inspect second"
+        type="range"
+        min="0"
+        max="59"
+        [value]="second()"
+        (input)="chooseSecond($event)"
+    /></label>
+    @if (sample(); as point) {
+      <dl class="metrics">
+        <div>
+          <dt>Measured water</dt>
+          <dd>{{ point.waterGrams | number: '1.0-1' }} g</dd>
+        </div>
+        <div>
+          <dt>Recipe target</dt>
+          <dd>{{ point.targetWaterGrams | number: '1.0-1' }} g</dd>
+        </div>
+        <div>
+          <dt>Water deviation</dt>
+          <dd>{{ point.waterGrams - point.targetWaterGrams | number: '1.0-1' }} g</dd>
+        </div>
+        <div>
+          <dt>Flow / target</dt>
+          <dd>{{ point.flowRate }} / {{ point.targetFlowRate }} g/s</dd>
+        </div>
+        <div>
+          <dt>Temperature</dt>
+          <dd>{{ point.temperatureC | number: '1.1-1' }} °C</dd>
+        </div>
+      </dl>
+    } @else {
+      <p role="status">Waiting for sample at {{ second() }} seconds.</p>
+    }
+    @if (data.anomaly; as anomaly) {
+      <article class="callout">
+        <h3>{{ anomaly.name ?? '30-second pour spike' }}</h3>
+        <p>
+          At {{ anomaly.second }} seconds, measured flow is {{ anomaly.actual }} g/s against a
+          {{ anomaly.target }} g/s target.
+        </p>
+      </article>
+    }
+    <p class="hint">{{ data.indexDescription }}</p>
+  }
+  @if (pulse(); as data) {
+    <section class="counter" id="live-counter">
+      <div>
+        <span class="eyebrow">TRANSIENT LIVE COUNTER</span>
+        <h2>One more tasting.</h2>
+        @if (counter(); as count) {
+          <strong class="counter-value">{{ count.value }}</strong>
+          <p>{{ count.restartBehavior }}</p>
+          @if (count.delta) {
+            <p>Last increment: +{{ count.delta }}</p>
+          }
+        }
+      </div>
+      <div>
+        <button (click)="addTasting()" [disabled]="counterBusy()">
+          {{ counterBusy() ? 'Adding…' : 'Add one tasting' }}
+        </button>
+        <p class="hint">
+          This live counter is separate from the seeded historical event samples below.
+        </p>
+      </div>
+    </section>
+    <h2>{{ data.event.name }}</h2>
+    <p>
+      <a routerLink="/demo/map" [queryParams]="{ area: data.area.slug }">{{ data.area.name }}</a> ·
+      16:00–18:00 UTC on September 14, 2026
+    </p>
+    <dl class="metrics">
+      <div>
+        <dt>Recorded events</dt>
+        <dd>{{ data.totalCount | number }}</dd>
+      </div>
+      <div>
+        <dt>Stored minute samples</dt>
+        <dd>{{ data.sampleCount | number }}</dd>
+      </div>
+      <div>
+        <dt>95th percentile per minute</dt>
+        <dd>{{ data.percentile95 | number: '1.0-2' }}</dd>
+      </div>
+      <div>
+        <dt>Events per minute</dt>
+        <dd>{{ data.ratePerMinute | number: '1.0-2' }}</dd>
+      </div>
+    </dl>
+    <form (submit)="changeBuckets($event)">
+      <label
+        >Bucket size<select aria-label="Bucket size" [formField]="fields.bucketMinutes">
+          <option value="1">1 minute</option>
+          <option value="5">5 minutes</option>
+          <option value="10">10 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="60">60 minutes</option>
+        </select></label
+      ><button type="submit">Update buckets</button>
+    </form>
+    <div class="bars" aria-label="Event counts by time bucket">
+      @for (item of data.buckets; track item.timestamp; let i = $index) {
+        <button
+          (click)="bucket.set(i)"
+          [class.selected]="bucket() === i"
+          [style.height.%]="(item.count / maxBucket()) * 100"
+          [attr.aria-label]="
+            (item.timestamp | date: 'HH:mm' : 'UTC') + ' UTC: ' + item.count + ' events'
+          "
+          [title]="(item.timestamp | date: 'HH:mm' : 'UTC') + ' UTC: ' + item.count + ' events'"
+        >
+          <span>{{ item.count }}</span>
+        </button>
+      }
+    </div>
+    @if (data.buckets[bucket()]; as item) {
+      <p>
+        Selected bucket: {{ item.timestamp | date: 'HH:mm' : 'UTC' }} UTC · {{ item.count }} events
+        · {{ item.ratePerMinute | number: '1.0-2' }} per minute
+      </p>
+    }
+    <p class="hint">
+      {{ data.rateDescription }} Native brew water rate:
+      {{ data.waterGramsPerSecond | number: '1.0-2' }} g/s.
+    </p>
+    <section class="examples">
+      <article>
+        <h3>Downsample the view</h3>
+        <p>{{ data.downsamplingDescription }}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>UTC</th>
+              <th>Total</th>
+              <th>Mean / minute</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of data.downsampled; track item.timestamp) {
+              <tr>
+                <td>{{ item.timestamp | date: 'HH:mm' : 'UTC' }}</td>
+                <td>{{ item.count }}</td>
+                <td>{{ item.averageCount | number: '1.0-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </article>
+      <article>
+        <h3>Retention in action</h3>
+        <p>{{ data.retention.detail }}</p>
+        <p>
+          Status: <strong>{{ data.retention.status }}</strong>
+        </p>
+        @if (data.retention.status !== 'not-started') {
+          <p>
+            {{ data.retention.beforeCount }} inserted → {{ data.retention.afterCount }} remaining ·
+            {{ data.retention.retentionDays }} day retention
+          </p>
+        }
+        <button (click)="retention()" [disabled]="busy() || data.retention.status === 'waiting'">
+          {{ busy() ? 'Starting…' : 'Run retention example' }}
+        </button>
+        <p class="hint">The view refreshes every five seconds while you stay on this page.</p>
+      </article>
+    </section>
+    <p class="hint">{{ data.indexDescription }}</p>
+  }
+  @if (queries().length) {
+    <details class="queries">
+      <summary>Inspect queries</summary>
+      @if (brew()?.indexPlan ?? pulse()?.indexPlan; as plan) {
+        <h3>Native time-series execution plan</h3>
+        <pre>{{ plan }}</pre>
+      }
+      @for (query of queries(); track $index) {
+        <h3>{{ query.label }}</h3>
+        <small>{{ query.language }}</small>
+        <pre>{{ query.command }}</pre>
+        <pre>{{ query.parameters | json }}</pre>
+      }
+    </details>
+  }
+  <footer><a routerLink="/demo/story">← Back to the story</a></footer>
+</main>

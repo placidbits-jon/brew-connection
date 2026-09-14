@@ -55,6 +55,15 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 - [Discovery rehearsal guide](docs/discovery.md) explains the four slide outcomes, full-text examples, ranking, and verification.
 - [Local model setup](docs/local-models.md) covers model pins, downloads, readiness, and optional natural-language input.
 
+## Phase 6 checkpoints
+
+- [Code lookup](http://localhost:4200/demo/lookup?code=badge-0001) resolves persistent badges and coffee short codes.
+- [Brew telemetry](http://localhost:4200/demo/brews/blueberry-bloom-v60) replays simulated measurements against pinned recipe targets.
+- [Event pulse](http://localhost:4200/demo/pulse?bucketMinutes=10) shows the transient Redis counter, durable time buckets, percentile, rate, downsampling, and retention example.
+- [Nearby coffee](http://localhost:4200/demo/map) combines indexed containment, distance, and vendor offers.
+- [Telemetry guide](docs/telemetry.md) explains the authored anomaly, simulation, lifecycle, and verification.
+- [Codes and locations guide](docs/keys-and-locations.md) covers durable lookup, counter restart behavior, and geospatial checks.
+
 If Aspire reports that DCP cannot load a self-signed root CA from the local developer certificate, start with the process-local workaround:
 
 ```bash

@@ -1,3 +1,5 @@
+import { EventTools } from './event-tools/event-tools';
+import { Telemetry } from './telemetry/telemetry';
 import { Documents } from './documents/documents';
 import { Routes } from '@angular/router';
 import { Discovery } from './discovery/discovery';
@@ -6,6 +8,30 @@ import { Lab } from './lab/lab';
 import { Community } from './community/community';
 
 export const routes: Routes = [
+  {
+    path: 'demo/lookup',
+    component: EventTools,
+    data: { mode: 'lookup' },
+    title: 'Code lookup | Brew Connection',
+  },
+  {
+    path: 'demo/map',
+    component: EventTools,
+    data: { mode: 'map' },
+    title: 'Nearby coffee | Brew Connection',
+  },
+  {
+    path: 'demo/brews/:brewSlug',
+    component: Telemetry,
+    data: { mode: 'brew' },
+    title: 'Brew telemetry | Brew Connection',
+  },
+  {
+    path: 'demo/pulse',
+    component: Telemetry,
+    data: { mode: 'pulse' },
+    title: 'Event pulse | Brew Connection',
+  },
   { path: 'demo/discover', component: Discovery, title: 'Discovery | Brew Connection' },
   {
     path: 'demo/recipes/:recipeSlug',

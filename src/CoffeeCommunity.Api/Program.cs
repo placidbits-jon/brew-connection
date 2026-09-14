@@ -20,6 +20,9 @@ builder.Services.AddSingleton<CommunityGraphGate>();
 builder.Services.AddTransient<CommunityGraph>();
 builder.Services.AddTransient<CommunityDocuments>();
 builder.Services.AddTransient<CommunityDiscovery>();
+builder.Services.AddTransient<ArcadeRedisClient>();
+builder.Services.AddTransient<CommunityLocations>();
+builder.Services.AddTransient<CommunityTelemetry>();
 builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<DemoBootstrapper>());
 builder.Services.AddHealthChecks()
     .AddCheck<ArcadeDbHealthCheck>("arcadedb", tags: ["ready"])
@@ -65,5 +68,7 @@ app.MapGet("/api/demo/story", async (string? persona, DemoExplorer explorer, Dem
 app.MapCommunityGraph();
 app.MapCommunityDocuments();
 app.MapCommunityDiscovery();
+app.MapCommunityLocations();
+app.MapCommunityTelemetry();
 app.MapDefaultEndpoints();
 app.Run();

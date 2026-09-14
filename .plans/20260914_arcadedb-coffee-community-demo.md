@@ -258,16 +258,16 @@ Real model checks passed digest pins, finite normalized 768-dimensional vectors,
 
 ## Phase 6: Key/Value, Time-Series, and Geospatial Features
 
-Status: Not started
+Status: Complete
 
-- [ ] Implement stable badge and short-code lookup using indexed persistent records.
-- [ ] Implement intentionally transient event counters through ArcadeDB's Redis support and label their restart behavior in the UI.
-- [ ] Implement simulated brew telemetry ingestion and a target-versus-actual chart on `/demo/brews/:brewSlug`.
-- [ ] Implement time-bucketed activity, percentile, rate, retention, and downsampling examples on `/demo/pulse`.
-- [ ] Implement venue coordinates and nearby/contained-in-area queries on `/demo/map`.
-- [ ] Correlate time-series tags and key/value results back to stable graph records in API responses.
-- [ ] Add slides for “badge lookup,” “live counter,” “brew curve,” “event pulse,” and “nearby coffee.”
-- [ ] Include the expected counter delta, named telemetry anomaly, or nearest location on each specialized-model slide.
+- [x] Implement stable badge and short-code lookup using indexed persistent records.
+- [x] Implement intentionally transient event counters through ArcadeDB's Redis support and label their restart behavior in the UI.
+- [x] Implement simulated brew telemetry ingestion and a target-versus-actual chart on `/demo/brews/:brewSlug`.
+- [x] Implement time-bucketed activity, percentile, rate, retention, and downsampling examples on `/demo/pulse`.
+- [x] Implement venue coordinates and nearby/contained-in-area queries on `/demo/map`.
+- [x] Correlate time-series tags and key/value results back to stable graph records in API responses.
+- [x] Add slides for “badge lookup,” “live counter,” “brew curve,” “event pulse,” and “nearby coffee.”
+- [x] Include the expected counter delta, named telemetry anomaly, or nearest location on each specialized-model slide.
 
 ### Verification Plan
 
@@ -279,7 +279,17 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Implemented persistent code lookup, transient live counters, native time-series views and replay, and geospatial discovery. `/demo/lookup` resolves `badge-0001` to Priya and `short-blueberry` to Ethiopia Blueberry Bloom through the unique `BadgeLookup.slug` index and stored target links. `/demo/map` uses indexed `geo.within` containment plus native `geo.distance` in meters, then follows `SELLS` links to coffees. Default results put Great Lakes Coffee Table at 0.0 m and Vendor Table 1 at approximately 8.2 m. The map labels its approximate drawing projection and the shared convention boundary used by all three seed areas.
+
+The event counter uses native Redis `GET`/`INCR` via ArcadeDB's authenticated HTTP command executor. The pinned TCP plugin was observed holding separate maps per connection; HTTP execution provides the verified shared server-memory map. Counter writes inherit the database client's no-retry behavior to avoid duplicate increments after ambiguous responses. The counter survives API restart, resets on ArcadeDB restart, and remains separate from durable historical activity. Database reset alone does not clear the server's Redis map. No additional Redis server, client package, or AppHost wiring was required.
+
+`/demo/brews/:brewSlug` shows measured water/flow against the pinned immutable recipe. Water targets interpolate its steps in the API; flow target is stored on the brew. At second 30, measured flow is 12 versus 4 g/s; water is 120 versus target 140 g, deviation −20 g. Actual stored samples determine anomaly explanations. A replay queues a durable uniquely indexed `TelemetryRun`; the Aspire worker posts ten deterministic samples per half-second chunk through native line-protocol ingestion. The API validates bounded partial batches, reconciles existing timestamps under the shared reset gate, and marks completion only after all 60 points exist. Each explicit UI replay creates a new run; retries retain the pending identity. The chart polls only unfinished runs and waits for the selected sample instead of labeling an earlier measurement with a later timestamp.
+
+`/demo/pulse` uses native time buckets, percentile, cumulative-water rate, and query-time downsampling. Golden results are 120 minute samples, 360 events, twelve ten-minute buckets of 30, percentile 5, event rate 3/minute (API division of native SUM), native water rate 4 g/s, and four 30-minute totals of 90 with means of 3. An isolated `DemoRetention` type uses one-day retention and one-minute compaction boundaries; native maintenance removes its two-day-old sample while preserving the recent sample and all authored telemetry. Retention works at sealed-block granularity, which is documented. SQL reads over native time-series storage avoid an observed 26.9.1 raw HTTP projection/tag bug; native HTTP ingestion remains in use. Inspectors expose executed statements, parameters and verified native time-series/index plans.
+
+Added five Obsidian slides with exact actions and outcomes, `docs/telemetry.md`, `docs/keys-and-locations.md`, and README checkpoints. Verification on 2026-09-14: key/location integration passed indexed stable lookup, invalid/missing codes, finite coordinate/radius validation, containment/distance plans, linked offers, four concurrent increments, API-restart preservation, and database-restart counter loss with persistent lookup survival. Telemetry integration passed golden samples and aggregates, partial and concurrent replay retries without duplicates, null-sample rejection, native tag/range execution plans, and native retention 2 → 1 without deleting story data. Real Chromium passed all five slide flows, two fresh progressive replays and reload, editable sample inspection, bucket draft isolation and URL persistence, lookup/map error recovery, marker selection and radius filtering, and all four pages at mobile width. Review findings were corrected and scoped re-review found no remaining backend issues; the final selected-sample display correction has a regression test.
+
+All 35 Angular tests and the production Angular build passed. Phase 4 document, Phase 3 graph, Phase 5 discovery, and Phase 2 seed/checkpoint regressions passed. Final .NET solution build passed with zero warnings/errors, and `git diff --check` passed. Story data was restored and Aspire stopped. Phase 6 changes remain uncommitted; Phase 7 is untouched.
 
 ## Phase 7: Transactions, Polyglot Queries, and Demo Lab
 

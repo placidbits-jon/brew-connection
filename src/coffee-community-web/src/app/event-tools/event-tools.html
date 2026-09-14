@@ -1,0 +1,136 @@
+<main>
+  <header>
+    <a routerLink="/demo/story">B/C · BREW CONNECTION</a>
+    <nav>
+      <a routerLink="/demo/lookup">Code lookup</a><a routerLink="/demo/pulse">Event pulse</a
+      ><a routerLink="/demo/map">Nearby coffee</a>
+    </nav>
+  </header>
+  <p class="kicker">
+    {{
+      mode() === 'lookup' ? 'ONE CODE · ONE COMMUNITY RECORD' : 'COORDINATES · DISTANCE · COMMUNITY'
+    }}
+  </p>
+  <h1>{{ mode() === 'lookup' ? 'Find the person behind the badge.' : 'Coffee around you.' }}</h1>
+  @if (mode() === 'lookup') {
+    <p>Badge and short codes resolve to durable community records.</p>
+    <form (submit)="search($event)">
+      <label
+        >Badge or short code<input
+          aria-label="Badge or short code"
+          [formField]="fields.code" /></label
+      ><button type="submit">Look up code</button>
+    </form>
+    <p class="hint">
+      Try <a routerLink="/demo/lookup" [queryParams]="{ code: 'badge-0001' }">badge-0001</a> or
+      <a routerLink="/demo/lookup" [queryParams]="{ code: 'short-blueberry' }">short-blueberry</a>.
+    </p>
+    @if (lookup(); as result) {
+      <article class="identity">
+        <span class="eyebrow">{{ result.kind }} · persistent lookup</span>
+        <h2>
+          <a [routerLink]="result.target.route">{{ result.target.name }}</a>
+        </h2>
+        <p>{{ result.code }} → {{ result.target.type }} · {{ result.target.slug }}</p>
+        <p>The indexed record survives an ArcadeDB restart.</p>
+      </article>
+    }
+  } @else {
+    <p>Find vendor tables by distance and the selected venue boundary.</p>
+    <form (submit)="search($event)" class="filters">
+      <label>Latitude<input aria-label="Latitude" [formField]="fields.latitude" /></label
+      ><label>Longitude<input aria-label="Longitude" [formField]="fields.longitude" /></label
+      ><label
+        >Radius in meters<input aria-label="Radius in meters" [formField]="fields.radius" /></label
+      ><label
+        >Venue area<select aria-label="Venue area" [formField]="fields.area">
+          <option value="pour-over-bar">Pour-over bar</option>
+          <option value="area-1">Game lounge</option>
+          <option value="area-2">Roaster row</option>
+        </select></label
+      ><button type="submit">Find nearby</button>
+    </form>
+    @if (map(); as data) {
+      <div class="map-layout">
+        <section class="map-panel">
+          <h2>{{ data.area.name }}</h2>
+          <p class="hint">{{ data.distanceModel }}</p>
+          <p>North ↑ · approximate local projection. Distances below come from ArcadeDB.</p>
+          <svg
+            viewBox="0 0 600 500"
+            role="img"
+            aria-label="Vendor positions relative to the search point"
+          >
+            <circle cx="300" cy="250" r="210" class="radius" />
+            <path d="M300 25V475 M75 250H525" class="axes" />
+            <circle cx="300" cy="250" r="6" class="origin" />
+            <text x="308" y="275">Search point</text>
+            @for (point of points(); track point.slug) {
+              <g
+                (click)="selected.set(point.slug)"
+                (keydown.enter)="selected.set(point.slug)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="point.name + ' ' + point.distanceMeters.toFixed(1) + ' meters'"
+                [class.selected]="selected() === point.slug"
+              >
+                <circle [attr.cx]="point.x" [attr.cy]="point.y" r="12" />
+                <text [attr.x]="point.x" [attr.y]="point.y + 4" text-anchor="middle" class="number">
+                  {{ point.index }}
+                </text>
+                <title>{{ point.name }} · {{ point.distanceMeters | number: '1.1-1' }} m</title>
+              </g>
+            }
+          </svg>
+          <p>{{ data.radius }} m radius · {{ data.results.length }} vendor tables</p>
+        </section>
+        <ol class="places">
+          @for (place of data.results; track place.slug; let rank = $index) {
+            <li>
+              <article [class.selected]="selected() === place.slug">
+                <button class="place-name" (click)="selected.set(place.slug)">
+                  {{ rank + 1 }}. {{ place.name }}
+                </button>
+                <p>
+                  <strong>{{ place.distanceMeters | number: '1.1-1' }} m</strong> ·
+                  {{ place.contained ? 'Inside selected area' : 'Outside selected area' }} ·
+                  {{ place.available ? 'Available' : 'Unavailable' }}
+                </p>
+                <ul>
+                  @for (coffee of place.coffees; track coffee.slug) {
+                    <li>
+                      <a [routerLink]="coffee.route">{{ coffee.name }}</a>
+                    </li>
+                  }
+                </ul>
+              </article>
+            </li>
+          } @empty {
+            <li>No vendor tables in this search. Try a larger radius or another location.</li>
+          }
+        </ol>
+      </div>
+    }
+  }
+  @if (loading()) {
+    <p role="status">Loading community records…</p>
+  }
+  @if (error()) {
+    <p role="alert" class="error">{{ error() }}</p>
+  }
+  @if (queries().length) {
+    <details class="queries">
+      <summary>Inspect queries</summary>
+      @for (query of queries(); track $index) {
+        <h3>{{ query.label }}</h3>
+        <small>{{ query.language }}</small>
+        <pre>{{ query.command }}</pre>
+        <pre>{{ query.parameters | json }}</pre>
+        @if (query.plan) {
+          <pre>{{ query.plan }}</pre>
+        }
+      }
+    </details>
+  }
+  <footer><a routerLink="/demo/story">← Back to the story</a></footer>
+</main>

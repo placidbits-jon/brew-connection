@@ -293,6 +293,86 @@ Aspire starts, connects, observes, and resets every resource.
 
 ---
 
+## One code, one community record
+
+**ArcadeDB:** Persistent uniquely indexed key/value documents
+
+- A badge resolves directly to the attendee's graph record.
+- A short code resolves to a coffee with provenance.
+- Both mappings survive a database-container restart.
+
+**Activate demo:** [Look up Priya's badge](http://localhost:4200/demo/lookup?code=badge-0001)
+
+**Action:** Click **Look up code**, then follow **Priya Nair**.
+
+**Look for:** `badge-0001` resolves to Priya's passport. The `short-blueberry` example resolves to Ethiopia Blueberry Bloom.
+
+---
+
+## One more tasting
+
+**ArcadeDB:** Transient Redis `GET` and `INCR` commands through the HTTP executor
+
+- The live counter is intentionally held in the database server's memory.
+- The historical time-series totals below are separate durable records.
+- Restarting the API preserves the counter; restarting ArcadeDB resets it.
+
+**Activate demo:** [Add a live tasting](http://localhost:4200/demo/pulse)
+
+**Action:** Note the live count, then click **Add one tasting** once.
+
+**Look for:** The live value increases by exactly 1 and shows **Last increment: +1**. The page explicitly labels the database-restart reset behavior.
+
+---
+
+## Watch the pour
+
+**ArcadeDB:** Native time-series ingestion and bounded timestamp/tag queries
+
+- Simulated measurements retain their brew, brewer, device, and method tags.
+- The graph supplies the brew's pinned recipe revision.
+- Replay ingests a separate run, preserving the seeded measurements.
+
+**Activate demo:** [Replay Blueberry Bloom](http://localhost:4200/demo/brews/blueberry-bloom-v60)
+
+**Action:** Click **Replay simulation** and wait for 60 samples. Keep **Inspect second** at `30`.
+
+**Look for:** The **30-second pour spike** reaches 12 g/s against a 4 g/s target. Measured water is 120 g; the interpolated pinned-recipe target is 140 g, a −20 g deviation.
+
+---
+
+## The event, in time buckets
+
+**ArcadeDB:** Native time buckets, percentile, rate, and query-time downsampling
+
+- Durable minute samples reveal patterns beyond the transient live count.
+- Changing the bucket size changes the view while preserving the source samples.
+- An isolated retention example demonstrates lifecycle behavior separately from the authored story.
+
+**Activate demo:** [Read the event pulse](http://localhost:4200/demo/pulse?bucketMinutes=10)
+
+**Action:** Keep **Bucket size** at **10 minutes**, click **Update buckets**, and select a bar.
+
+**Look for:** 120 minute samples sum to 360 events. Each of the 12 bars contains 30 events; the 95th percentile is 5, the rate is 3 events/minute, and each 30-minute downsample totals 90.
+
+---
+
+## Nearby coffee, connected
+
+**ArcadeDB:** Indexed polygon containment, native distance in meters, and graph-linked vendor offers
+
+- Search from a coordinate within the convention boundary.
+- Distance answers where; the graph answers which coffees are sold there.
+- Selecting a marker highlights its vendor and linked coffees.
+
+**Activate demo:** [Find the nearest coffee table](http://localhost:4200/demo/map?latitude=42.3314&longitude=-83.0458&radius=100&area=pour-over-bar)
+
+**Action:** Click **Find nearby**, then select **Great Lakes Coffee Table** on the map or result list.
+
+**Look for:** Great Lakes Coffee Table is first at 0.0 m, inside the selected boundary, with Ethiopia Blueberry Bloom linked beneath it. Vendor Table 1 is approximately 8.2 m away.
+
+---
+
 ## Compatibility checkpoint
 
 **ArcadeDB:** Version 26.9.1 with native and plugin query engines
