@@ -1,0 +1,9 @@
+:host { display: block; min-height: 100vh; background: #11110f; }
+main { max-width: 1240px; margin: auto; padding: 40px 24px 80px; }
+a, .eyebrow { color: #d68b56; } h1 { font-size: clamp(36px, 6vw, 64px); margin-block: 20px; }
+p { color: #bbb3a5; line-height: 1.6; } .eyebrow { margin-top: 40px; letter-spacing: .12em; font-size: 12px; }
+.explorer { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 32px; margin-top: 32px; }
+nav { display: grid; gap: 5px; align-content: start; max-height: 65vh; overflow-y: auto; } button { background: #1d1c19; color: #f7f3e8; border: 1px solid #514b41; padding: 12px; text-align: left; overflow-wrap: anywhere; }
+button.selected { border-color: #d68b56; background: #3b281d; } button small { display: block; color: #aaa294; margin-top: 4px; }
+section { min-width: 0; } table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 10px; border-bottom: 1px solid #514b41; } article { padding: 16px; border: 1px solid #514b41; margin-bottom: 12px; } pre { overflow: auto; font-size: 12px; line-height: 1.6; } summary { cursor: pointer; } .notice { border-left: 2px solid #d68b56; padding-left: 16px; }
+@media (max-width: 600px) { .explorer { grid-template-columns: 1fr; } nav { max-height: 260px; overflow-y: auto; } }

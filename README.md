@@ -24,8 +24,20 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 ## Demo controls
 
 - **Reveal Aspire resource state** shows live application, database, schema, and embedding readiness.
-- **Reset demo state** drops and recreates only the `coffee_demo` database, then reapplies migrations and deterministic seed data.
+- **Reset demo state** drops and recreates only the `coffee_demo` database, then reapplies the community schema and the deterministic `story` seed. See [reset and verification commands](docs/seed-profiles.md) for the `scale` profile.
 - The walkthrough slides are in [`docs/arcadedb-coffee-demo.md`](docs/arcadedb-coffee-demo.md) and use Obsidian's `---` slide separators.
+
+## Phase 2 checkpoints
+
+- [Maya's seeded story](http://localhost:4200/demo/story?persona=maya) shows community counts, meetings, tastings, and rematch targets.
+- [Schema explorer](http://localhost:4200/demo/lab?view=schema) shows live types, properties, and logical indexes.
+- [Seed profile guide](docs/seed-profiles.md) explains repeatability checks, scale ingestion, and the current embedding limitation.
+
+If Aspire reports that DCP cannot load a self-signed root CA from the local developer certificate, start with the process-local workaround:
+
+```bash
+ASPIRE_DCP_USE_DEVELOPER_CERTIFICATE=false aspire start
+```
 
 ## Compatibility verification
 

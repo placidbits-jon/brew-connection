@@ -62,6 +62,13 @@ public sealed class ArcadeDbClient
         return await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
     }
 
+    public async Task WriteTimeSeriesAsync(string lines, CancellationToken cancellationToken)
+    {
+        using var content = new StringContent(lines, Encoding.UTF8, "text/plain");
+        using var response = await _httpClient.PostAsync($"/api/v1/ts/{_options.Database}/write?precision=ms", content, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
     public async Task<string> BeginTransactionAsync(CancellationToken cancellationToken)
     {
         using var response = await _httpClient.PostAsync($"/api/v1/begin/{_options.Database}", null, cancellationToken);

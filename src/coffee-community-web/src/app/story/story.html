@@ -14,7 +14,7 @@
     <div class="hero-actions">
       <label>
         <span>Explore as</span>
-        <select [value]="selectedPersona()" (change)="selectedPersona.set($any($event.target).value)">
+        <select [value]="selectedPersona()" (change)="selectPersona($event)">
           <option value="maya-chen">Maya Chen · attendee</option>
           <option value="priya-nair">Priya Nair · brewer</option>
           <option value="luis-ortega">Luis Ortega · roaster</option>
@@ -22,6 +22,34 @@
       </label>
       <a class="primary" [routerLink]="['/demo/passport', selectedPersona()]">Begin the story →</a>
     </div>
+  </section>
+
+  <section class="seed-story" aria-labelledby="seed-title">
+    <p class="section-kicker">THE SEEDED COMMUNITY</p>
+    <h2 id="seed-title">A story you can follow.</h2>
+    @if (storyLoading()) { <p role="status">Loading the community…</p> }
+    @if (storyError()) { <p role="alert">This persona could not be loaded. Choose a persona above, or check resource readiness below.</p> }
+    @if (story(); as data) {
+      <p>{{ data.persona.name }} · {{ data.persona.role }} · {{ data.profile }} profile</p>
+      <div class="seed-counts">
+        @for (count of data.counts; track count.type) { <span><strong>{{ count.count }}</strong> {{ count.type }}</span> }
+      </div>
+      <div class="story-grid">
+        <article><h3>People met</h3><ul>
+          @for (person of data.connections; track person.slug) { <li>{{ person.name }} <small>{{ person.context }}</small></li> }
+          @empty { <li>No meetings yet.</li> }
+        </ul></article>
+        <article><h3>Cups tasted</h3><ul>
+          @for (brew of data.tastings; track brew.slug) { <li>{{ brew.name }}</li> }
+          @empty { <li>No tastings yet.</li> }
+        </ul></article>
+        <article><h3>Rematch targets</h3><ul>
+          @for (person of data.rematches; track person.slug) { <li>{{ person.name }}</li> }
+          @empty { <li>No game losses yet.</li> }
+        </ul></article>
+      </div>
+      <a class="text-button" routerLink="/demo/lab" [queryParams]="{view: 'schema'}">Explore the live schema →</a>
+    }
   </section>
 
   <section class="system" aria-labelledby="system-title">
@@ -41,6 +69,7 @@
         <article><span class="status-dot" [class.ready]="status()?.embedding === 'ready'"></span><strong>Local embeddings</strong><small>{{ status()?.embeddingProvider ?? 'unavailable' }}</small></article>
       </div>
       @if (status()?.error) { <p class="error">{{ status()?.error }}</p> }
+      @if (resetError()) { <p class="error" role="alert">Reset failed. Check resource readiness and try again.</p> }
       <div class="resource-actions">
         <button class="secondary" (click)="refresh()">Refresh status</button>
         <button class="secondary danger" [disabled]="resetting()" (click)="reset()">{{ resetting() ? 'Resetting…' : 'Reset demo state' }}</button>

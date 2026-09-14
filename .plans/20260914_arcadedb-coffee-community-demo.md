@@ -138,15 +138,15 @@ Created a file-based Aspire 13.5.3 AppHost that orchestrates the pinned ArcadeDB
 
 ## Phase 2: Schema and Deterministic Story Data
 
-Status: Not started
+Status: Complete
 
-- [ ] Implement the graph, document, index, time-series, and geospatial schema defined above.
-- [ ] Add unique, hash, ordered, full-text, and vector indexes appropriate to their access patterns.
-- [ ] Create a `story` seed profile with roughly 40 people, 8 vendors, 25 roast batches, 20 recipes, 100 brews, and authored relationship chains.
-- [ ] Seed deliberate keyword-only, semantic-only, graph-personalized, provenance, game-rematch, and telemetry scenarios.
-- [ ] Create a reproducible `scale` profile with thousands of people and coffees, tens of thousands of embeddings, and millions of telemetry samples.
-- [ ] Store stable slugs separately from ArcadeDB RIDs so slide links survive reseeding.
-- [ ] Create a schema slide linked to `/demo/lab?view=schema` and a seed-story slide linked to `/demo/story?persona=maya`.
+- [x] Implement the graph, document, index, time-series, and geospatial schema defined above.
+- [x] Add unique, hash, ordered, full-text, and vector indexes appropriate to their access patterns.
+- [x] Create a `story` seed profile with roughly 40 people, 8 vendors, 25 roast batches, 20 recipes, 100 brews, and authored relationship chains.
+- [x] Seed deliberate keyword-only, semantic-only, graph-personalized, provenance, game-rematch, and telemetry scenarios.
+- [x] Create a reproducible `scale` profile with thousands of people and coffees, tens of thousands of embeddings, and millions of telemetry samples.
+- [x] Store stable slugs separately from ArcadeDB RIDs so slide links survive reseeding.
+- [x] Create a schema slide linked to `/demo/lab?view=schema` and a seed-story slide linked to `/demo/story?persona=maya`.
 
 ### Verification Plan
 
@@ -156,7 +156,13 @@ Status: Not started
 
 ### Phase Summary
 
-_(write when phase completes)_
+Implemented migration `002-community` with all planned vertex, edge, document, native time-series, and geospatial types, plus logical hash, ordered, full-text, and 768-dimensional vector indexes. The story seed contains 40 people, 8 vendors, 25 roast batches, 20 recipes (two immutable revision documents each), 100 brews, 45 indexed embeddings, and 6,000 telemetry samples. The scale seed retains the authored story and grows to 2,040 people, 2,025 batches, 20,045 indexed embeddings, and 2,000,000 telemetry samples. Stable slugs, durable badges and short codes, linked recipe revisions, attributed game results, provenance, notes, and the fixed 30-second pour-rate spike are seeded reproducibly.
+
+Added read-only `/api/demo/schema` and `/api/demo/story` endpoints, a live schema explorer at `/demo/lab?view=schema`, and a seeded persona summary at `/demo/story?persona=maya`. Persona changes update the URL and reload correctly. Meetings appear for both participants. Added the two matching Obsidian slides and `docs/seed-profiles.md` with reset and verification commands. Reset accepts only `story` or `scale`; startup preserves completed current seeds and rebuilds foundation or interrupted seeds. Database HTTP retries are disabled to avoid replaying mutations.
+
+Decisions for later phases: the local foundation embedding provider remains explicitly labeled `deterministic-compatibility`. Phase 2 seeds and verifies the keyword distractor, synonym-rich Summer Orchard candidate excluded from the `blueberry` keyword results, and Priya's graph favorite; semantic ranking and its golden-query proof still belong to Phase 5. These fixtures do not claim that token-hash vectors provide semantic inference. Native time-series retention is omitted for the fixed rehearsal epoch so seed samples survive future rehearsals; Phase 6 owns retention examples. Notes index `ownerSlug` plus visibility while retaining owner links because ArcadeDB 26.9.1 rejects a linked vertex as a hash key.
+
+Verification on 2026-09-14: both profiles reset and seeded twice with stable full slug snapshots, exact database counts, no duplicate keys, and actual native telemetry COUNT of 6,000 / 2,000,000. Schema introspection, hash/full-text query plans, vector lookup, geospatial ordering, immutable revision provenance, game scores, short-code resolution, and the telemetry anomaly passed. API restart preserved the scale seed; an intentionally incomplete marker and rogue record triggered a clean story rebuild on restart. Angular tests passed 4/4, production build passed, and real Chromium checks passed both slide interactions, persona selection/reload, schema details, and mobile width with no browser errors. `scripts/verify-demo-checkpoints.py` also passed incoming/outgoing meetings, missing-persona 404, invalid-profile 400 without data changes, and logical schema indexes. The local Aspire session required `ASPIRE_DCP_USE_DEVELOPER_CERTIFICATE=false` due to DCP's developer-certificate root-CA error; the workaround is documented. Phase 3 remains untouched.
 
 ## Phase 3: Community Graph and Coffee Passport
 

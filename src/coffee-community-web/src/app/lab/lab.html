@@ -1,0 +1,42 @@
+<main>
+  <a routerLink="/demo/story">← Back to the story</a>
+  <p class="eyebrow">QUERY LAB · SCHEMA</p>
+  <h1>Schema explorer</h1>
+  <p>Explore the types, properties, and indexes in the current ArcadeDB database.</p>
+  @if (view !== 'schema') {
+    <p class="notice">Curated query and compatibility actions arrive in Phase 7. The live schema is available below.</p>
+  }
+  @if (error()) {
+    <p role="alert">The schema could not be loaded. Check resource readiness on the story screen.</p>
+    <button (click)="load()">Retry</button>
+  } @else if (schema(); as data) {
+    <p>{{ data.types.length }} types · {{ data.indexes.length }} indexes</p>
+    <div class="explorer">
+      <nav aria-label="Database types">
+        @for (type of data.types; track type.name) {
+          <button [class.selected]="selected() === type.name" [attr.aria-pressed]="selected() === type.name" (click)="selected.set(type.name)">
+            {{ type.name }} <small>{{ type.type === 't' ? 'time-series' : type.type }}</small>
+          </button>
+        }
+      </nav>
+      <section aria-live="polite">
+        @if (detail(); as type) {
+          <h2>{{ type.name }}</h2>
+          <h3>Properties</h3>
+          @if (type.properties?.length) {
+            <table><thead><tr><th>Name</th><th>Type</th></tr></thead><tbody>
+              @for (property of type.properties; track property.name) {
+                <tr><td>{{ property.name }}</td><td>{{ property.type }}</td></tr>
+              }
+            </tbody></table>
+          } @else { <p>No declared properties. Inspect metadata for native type configuration.</p> }
+          <h3>Indexes</h3>
+          @for (index of indexes(); track index.name) {
+            <article><strong>{{ index.name }}</strong><p>{{ index.type }}{{ index.unique ? ' · unique' : '' }}</p><pre>{{ index | json }}</pre></article>
+          } @empty { <p>No secondary indexes on this type.</p> }
+          <details><summary>Full type metadata</summary><pre>{{ type | json }}</pre></details>
+        } @else { <p>Select a type to inspect its properties and indexes.</p> }
+      </section>
+    </div>
+  } @else { <p role="status">Loading schema…</p> }
+</main>
