@@ -1,4 +1,5 @@
-import { DecimalPipe, JsonPipe } from '@angular/common';
+import { QueryInspector, queriesByLabel } from '../query-inspector/query-inspector';
+import { DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -25,7 +26,7 @@ interface Query {
   language: string;
   command: string;
   parameters: unknown;
-  plan?: unknown;
+  plan?: string | null;
 }
 interface DiscoveryResult {
   query: string;
@@ -45,7 +46,7 @@ interface DiscoveryResult {
 
 @Component({
   selector: 'app-discovery',
-  imports: [RouterLink, FormField, DecimalPipe, JsonPipe],
+  imports: [RouterLink, FormField, DecimalPipe, QueryInspector],
   templateUrl: './discovery.html',
   styleUrl: './discovery.scss',
 })
@@ -64,7 +65,7 @@ export class Discovery {
   protected readonly data = signal<DiscoveryResult | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
-  protected readonly showQueries = signal(false);
+  protected readonly evidenceQueries = computed(() => queriesByLabel(this.data()?.queries, 'Actual acquaintance → favorite brew → available coffee paths', 'Current vendor availability'));
   protected readonly mode = signal('keyword');
   protected readonly model = signal({
     query: 'blueberry',
@@ -108,7 +109,6 @@ export class Discovery {
           this.loading.set(true);
           this.error.set('');
           this.data.set(null);
-          this.showQueries.set(false);
         }),
         switchMap(() =>
           this.http

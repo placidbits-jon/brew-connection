@@ -1,3 +1,4 @@
+import { QueryInspector, queriesByLabel, InspectedQuery } from '../query-inspector/query-inspector';
 import { JsonPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
@@ -9,14 +10,14 @@ import { combineLatest, Subject, startWith, switchMap, tap, catchError, of, take
 interface RecordData { slug: string; name?: string; [key: string]: unknown }
 interface Revision extends RecordData { revision: number; steps: {atSeconds: number; waterGrams: number; action: string}[]; equipment: {brewer: string; filter: string; grinder: string}; grind: {clicks: number}; temperatureC: number; coffeeGrams: number; waterGrams: number; commentary: string }
 interface Note extends RecordData { body: string; visibility: string; ownerSlug: string; subjectType: string; subjectSlug: string }
-interface Query { label: string; language: string; command: string; parameters: unknown }
+type Query = InspectedQuery;
 interface RecipeDetail { recipe: RecordData; currentRevision: Revision; revisions: Revision[]; notes: Note[]; queries: Query[] }
 interface CoffeeDetail { batch: RecordData; lot: RecordData; roaster: RecordData; vendor: RecordData; roastProfile: RecordData; brews: {brew: RecordData; brewer: RecordData; recipe: RecordData; revision: Revision; reactions: {person: RecordData; kind: string; reaction: RecordData}[]}[]; notes: Note[]; queries: Query[] }
 interface GraphNode { id: string; label: string; kind: string; record: unknown; x: number; y: number }
 interface GraphEdge { from: GraphNode; to: GraphNode; label: string }
 const defaults = () => ({steps: [{atSeconds: 0, waterGrams: 60, action: 'Bloom'}, {atSeconds: 45, waterGrams: 180, action: 'Slow spiral pour'}, {atSeconds: 90, waterGrams: 300, action: 'Finish pour'}], equipment: {brewer: 'V60', filter: 'paper', grinder: 'hand grinder'}, grind: {clicks: 20}, temperatureC: 93, coffeeGrams: 20, waterGrams: 300, commentary: 'A sweeter finish'});
 
-@Component({selector: 'app-documents', imports: [RouterLink, JsonPipe, FormField], templateUrl: './documents.html', styleUrl: './documents.scss'})
+@Component({selector: 'app-documents', imports: [RouterLink, JsonPipe, FormField, QueryInspector], templateUrl: './documents.html', styleUrl: './documents.scss'})
 export class Documents {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
@@ -34,12 +35,35 @@ export class Documents {
   protected readonly error = signal('');
   protected readonly message = signal('');
   protected readonly creating = signal(false);
-  protected readonly showQueries = signal(false);
   protected readonly selectedNode = signal<GraphNode | null>(null);
   protected readonly comparison = signal('');
   protected readonly previous = computed(() => this.recipe()?.revisions.find(r => r.slug === this.comparison()));
-  protected readonly queries = computed(() => this.recipe()?.queries ?? this.coffee()?.queries ?? []);
-  protected readonly notes = signal<Note[]>([]);
+  protected readonly recipeQueries = computed(() => this.creating() ? [] : queriesByLabel(this.recipe()?.queries, 'Recipe vertex and current document link', 'Immutable recipe history', 'Current revision link'));
+  protected readonly historyQueries = computed(() => queriesByLabel(this.recipe()?.queries, 'Immutable recipe history', 'Current revision link'));
+  protected readonly provenanceQueries = computed(() => {
+    const entry = this.coffee()?.brews.find(b => b.brew.slug === this.selectedBrew());
+    return queriesByLabel(this.coffee()?.queries, 'Resolve RoastBatch', 'Follow FROM_LOT', 'Follow ROASTED', 'Follow SELLS', 'Nested roast profile document', 'Brews using this batch', 'Follow BREWED', 'Follow USED_RECIPE', 'Historical revision pinned on USED_RECIPE', 'Attendee TASTED reactions', 'Attendee LOVED reactions', 'Resolve Person').filter(query => {
+      const slug = (query.parameters as {slug?: string})?.slug;
+      if (query.label === 'Resolve Person') return entry?.reactions.some(r => r.person.slug === slug);
+      const brewLabels = ['Follow BREWED', 'Follow USED_RECIPE', 'Historical revision pinned on USED_RECIPE', 'Attendee TASTED reactions', 'Attendee LOVED reactions'];
+      return !brewLabels.includes(query.label) || slug === this.selectedBrew();
+    });
+  });
+  protected readonly documentQueries = computed(() => {
+    const node = this.selectedNode();
+    if (!node) return [];
+    const labels: Record<string, string[]> = {
+      batch: ['Resolve RoastBatch'], lot: ['Follow FROM_LOT'], roaster: ['Follow ROASTED'], vendor: ['Follow SELLS'],
+      profile: ['Nested roast profile document'], brew: ['Brews using this batch'], brewer: ['Follow BREWED'],
+      recipe: ['Follow USED_RECIPE'], revision: ['Historical revision pinned on USED_RECIPE'],
+      reaction: ['Resolve Person', `Attendee ${node.kind.split(' · ')[0]} reactions`],
+    };
+    return queriesByLabel(this.provenanceQueries(), ...(labels[node.id.split('-')[0]] ?? [])).filter(query => query.label !== 'Resolve Person' || (query.parameters as {slug?: string})?.slug === (node.record as RecordData).slug);
+  });
+  private readonly notesResult = signal<{context: string; notes: Note[]; queries: Query[]} | null>(null);
+  private readonly notesContext = computed(() => JSON.stringify([this.persona(), this.noteModel().subjectType, this.noteModel().subjectSlug]));
+  protected readonly notes = computed(() => this.notesResult()?.context === this.notesContext() ? this.notesResult()!.notes : []);
+  protected readonly notesQueries = computed(() => this.notesResult()?.context === this.notesContext() ? this.notesResult()!.queries : []);
   protected readonly model = signal({slug: 'story-recipe', name: 'Story pour-over', ...defaults()});
   protected readonly fields = form(this.model, f => {required(f.slug); required(f.name); min(f.coffeeGrams, 1); min(f.waterGrams, 1); min(f.temperatureC, 1); min(f.grind.clicks, 1); required(f.equipment.brewer); required(f.commentary); applyEach(f.steps, step => {required(step.action); min(step.atSeconds, 0); min(step.waterGrams, 0);});});
   protected readonly noteModel = signal({subjectType: 'Recipe', subjectSlug: 'blueberry-v60', visibility: 'private', body: ''});
@@ -69,11 +93,11 @@ export class Documents {
         this.contextEpoch++; this.noteKey = crypto.randomUUID(); this.busy.set(false); this.message.set('');
         const previousSlug = this.slug();
         this.mode.set(this.route.snapshot.data['mode']); this.slug.set(params.get('recipeSlug') ?? params.get('roastBatchSlug') ?? ''); this.persona.set(query.get('persona') ?? 'maya-chen');
-        this.cancelNotes.next(); this.noteModel.update(m => ({...m, body: ''})); this.loading.set(true); this.error.set(''); this.recipe.set(null); this.coffee.set(null); this.notes.set([]); this.selectedNode.set(null);
+        this.cancelNotes.next(); this.noteModel.update(m => ({...m, body: ''})); this.loading.set(true); this.error.set(''); this.recipe.set(null); this.coffee.set(null); this.notesResult.set(null); this.selectedNode.set(null);
         if (previousSlug !== this.slug()) this.noteModel.update(m => ({...m, subjectType: this.mode() === 'recipes' ? 'Recipe' : 'RoastBatch', subjectSlug: this.slug()}));
       }),
       switchMap(() => this.http.get<RecipeDetail | CoffeeDetail>(`/api/demo/${this.mode()}/${encodeURIComponent(this.slug())}`, {params: {persona: this.persona()}}).pipe(catchError(error => {this.error.set(this.errorText(error)); return of(null);}))), takeUntilDestroyed(),
-    ).subscribe(data => { if (data && 'recipe' in data) this.acceptRecipe(data); else if (data) {this.coffee.set(data); if (!data.brews.some(b => b.brew.slug === this.selectedBrew())) this.selectedBrew.set(data.brews[0]?.brew.slug ?? ''); this.notes.set(data.notes); this.selectedNode.set(this.graph().nodes.find(n => n.id === 'batch') ?? null);} this.loading.set(false); if (data && (this.noteModel().subjectSlug !== this.slug() || this.noteModel().subjectType !== (this.mode() === 'recipes' ? 'Recipe' : 'RoastBatch'))) this.loadNotes(); });
+    ).subscribe(data => { if (data && 'recipe' in data) this.acceptRecipe(data); else if (data) {this.coffee.set(data); if (!data.brews.some(b => b.brew.slug === this.selectedBrew())) this.selectedBrew.set(data.brews[0]?.brew.slug ?? ''); this.acceptPageNotes(data); this.selectedNode.set(this.graph().nodes.find(n => n.id === 'batch') ?? null);} this.loading.set(false); if (data && (this.noteModel().subjectSlug !== this.slug() || this.noteModel().subjectType !== (this.mode() === 'recipes' ? 'Recipe' : 'RoastBatch'))) this.loadNotes(); });
   }
   protected chooseBrew(event: Event): void {this.selectedBrew.set((event.target as HTMLSelectElement).value); this.selectedNode.set(this.graph().nodes.find(n => n.id === 'brew-0') ?? null);}
   protected retry(): void {this.reload.next();}
@@ -92,8 +116,9 @@ export class Documents {
     this.http.post<RecipeDetail>(creating ? '/api/demo/recipes' : `/api/demo/recipes/${encodeURIComponent(this.slug())}/revisions`, body).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next: data => {if (epoch !== this.contextEpoch) return; this.busy.set(false); this.creating.set(false); this.acceptRecipe(data); this.message.set(`Revision ${data.currentRevision.revision} published. Existing brews keep their pinned revision.`); if (creating) void this.router.navigate(['/demo/recipes', data.recipe.slug], {queryParams: {persona: this.persona()}});}, error: error => {if (epoch !== this.contextEpoch) return; this.busy.set(false); this.error.set(this.errorText(error));}});
   }
   protected loadNotes(): void {
-    this.cancelNotes.next(); this.error.set(''); this.notes.set([]);
-    this.http.get<{notes: Note[]}>('/api/demo/notes', {params: {persona: this.persona(), subjectType: this.noteModel().subjectType, subjectSlug: this.noteModel().subjectSlug}}).pipe(takeUntil(this.cancelNotes), takeUntilDestroyed(this.destroyRef)).subscribe({next: data => this.notes.set(data.notes), error: error => this.error.set(this.errorText(error))});
+    this.cancelNotes.next(); this.error.set(''); this.notesResult.set(null);
+    const context = this.notesContext();
+    this.http.get<{notes: Note[]; queries?: Query[]}>('/api/demo/notes', {params: {persona: this.persona(), subjectType: this.noteModel().subjectType, subjectSlug: this.noteModel().subjectSlug}}).pipe(takeUntil(this.cancelNotes), takeUntilDestroyed(this.destroyRef)).subscribe({next: data => {if (context === this.notesContext()) this.notesResult.set({context, notes: data.notes, queries: queriesByLabel(data.queries, 'Notes visible to selected demo persona')});}, error: error => {if (context === this.notesContext()) this.error.set(this.errorText(error));}});
   }
   protected saveNote(event: Event): void {
     event.preventDefault(); if (this.busy() || this.noteFields().invalid()) return;
@@ -101,6 +126,10 @@ export class Documents {
     this.busy.set(true); this.error.set(''); this.message.set('');
     this.http.post('/api/demo/notes', {...this.noteModel(), personSlug: this.persona(), slug: this.noteKey}).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next: () => {if (epoch !== this.contextEpoch) return; this.busy.set(false); this.message.set('Note saved.'); this.noteKey = crypto.randomUUID(); this.noteModel.update(m => ({...m, body: ''})); this.loadNotes();}, error: error => {if (epoch !== this.contextEpoch) return; this.busy.set(false); this.error.set(this.errorText(error));}});
   }
-  private acceptRecipe(data: RecipeDetail): void {this.recipe.set(data); this.notes.set(data.notes); this.comparison.set(data.revisions.find(r => r.revision < data.currentRevision.revision)?.slug ?? ''); const {steps,equipment,grind,temperatureC,coffeeGrams,waterGrams,commentary} = data.currentRevision; this.model.set({slug: data.recipe.slug, name: data.recipe.name ?? '', steps: structuredClone(steps), equipment: {...equipment}, grind: {...grind}, temperatureC, coffeeGrams, waterGrams, commentary});}
+  private acceptPageNotes(data: {notes: Note[]; queries: Query[]}): void {
+    const type = this.mode() === 'recipes' ? 'Recipe' : 'RoastBatch';
+    if (this.noteModel().subjectType === type && this.noteModel().subjectSlug === this.slug()) this.notesResult.set({context: this.notesContext(), notes: data.notes, queries: queriesByLabel(data.queries, 'Notes visible to selected demo persona')});
+  }
+  private acceptRecipe(data: RecipeDetail): void {this.recipe.set(data); this.acceptPageNotes(data); this.comparison.set(data.revisions.find(r => r.revision < data.currentRevision.revision)?.slug ?? ''); const {steps,equipment,grind,temperatureC,coffeeGrams,waterGrams,commentary} = data.currentRevision; this.model.set({slug: data.recipe.slug, name: data.recipe.name ?? '', steps: structuredClone(steps), equipment: {...equipment}, grind: {...grind}, temperatureC, coffeeGrams, waterGrams, commentary});}
   private errorText(error: HttpErrorResponse): string {return error.error?.detail ?? error.error?.error ?? error.error?.message ?? 'Unable to load or save. Check the connection and try again.';}
 }

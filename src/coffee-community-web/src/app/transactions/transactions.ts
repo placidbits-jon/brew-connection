@@ -1,3 +1,4 @@
+import { QueryInspector, queriesByLabel } from '../query-inspector/query-inspector';
 import { JsonPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
@@ -24,7 +25,7 @@ interface Receipt {
 }
 @Component({
   selector: 'app-transactions',
-  imports: [RouterLink, JsonPipe],
+  imports: [RouterLink, JsonPipe, QueryInspector],
   templateUrl: './transactions.html',
   styleUrl: './transactions.scss',
 })
@@ -40,6 +41,11 @@ export class Transactions {
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
   protected readonly ran = signal(false);
+  protected sectionQueries(...labels: string[]) { return queriesByLabel(this.data()?.queries, ...labels); }
+  protected readonly countQueries = computed(() => (this.data()?.queries ?? []).filter(q => q.label.startsWith('Count durable ') || q.label === 'Optional replay document type'));
+  protected readonly writeQueries = computed(() => (this.data()?.queries ?? []).filter(q => q.label.startsWith('Create ') || q.label.startsWith('Resolve ')));
+  protected readonly snapshotQueries = computed(() => (this.data()?.queries ?? []).filter(q => q.label.startsWith('Verify ') || q.label === 'Linked tasting note' || q.label === 'SQL brew identity'));
+  protected readonly sqlQuery = computed(() => this.sectionQueries('SQL brew identity').slice(-1));
   protected readonly rows = computed(() => {
     const d = this.data();
     if (!d) return [];

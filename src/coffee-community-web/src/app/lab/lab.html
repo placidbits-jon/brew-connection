@@ -47,6 +47,7 @@
         <section aria-live="polite">
           @if (detail(); as type) {
             <h2>{{ type.name }}</h2>
+            <app-query-inspector title="Type properties" [queries]="data.queries ?? []" description="The selected type is filtered from the returned schema metadata." />
             <h3>Properties</h3>
             @if (type.properties?.length) {
               <table>
@@ -68,7 +69,7 @@
             } @else {
               <p>No declared properties. Inspect metadata for native type configuration.</p>
             }
-            <h3>Indexes</h3>
+            <h3>Indexes</h3><app-query-inspector title="Type indexes" [queries]="data.queries ?? []" description="Logical indexes come from the selected type in the same schema metadata response." />
             @for (index of indexes(); track index.name) {
               <article>
                 <strong>{{ index.name }}</strong>

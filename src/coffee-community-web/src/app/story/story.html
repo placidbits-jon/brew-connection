@@ -31,22 +31,24 @@
     @if (storyError()) { <p role="alert">This persona could not be loaded. Choose a persona above, or check resource readiness below.</p> }
     @if (story(); as data) {
       <p>{{ data.persona.name }} · {{ data.persona.role }} · {{ data.profile }} profile</p>
+      <app-query-inspector title="Story persona" [queries]="sectionQueries('Story persona', 'Story profile')" />
       <div class="seed-counts">
         @for (count of data.counts; track count.type) { <span><strong>{{ count.count }}</strong> {{ count.type }}</span> }
       </div>
+      <app-query-inspector title="Community counts" [queries]="sectionQueries('Story counts')" />
       <div class="story-grid">
         <article><h3>People met</h3><ul>
           @for (person of data.connections; track person.slug) { <li>{{ person.name }} <small>{{ person.context }}</small></li> }
           @empty { <li>No meetings yet.</li> }
-        </ul></article>
+        </ul><app-query-inspector title="People met" [queries]="sectionQueries('Story meetings')" /></article>
         <article><h3>Cups tasted</h3><ul>
           @for (brew of data.tastings; track brew.slug) { <li>{{ brew.name }}</li> }
           @empty { <li>No tastings yet.</li> }
-        </ul></article>
+        </ul><app-query-inspector title="Cups tasted" [queries]="sectionQueries('Story tastings')" /></article>
         <article><h3>Rematch targets</h3><ul>
           @for (person of data.rematches; track person.slug) { <li>{{ person.name }}</li> }
           @empty { <li>No game losses yet.</li> }
-        </ul></article>
+        </ul><app-query-inspector title="Rematch targets" [queries]="sectionQueries('Story rematches')" /></article>
       </div>
       <a class="text-button" routerLink="/demo/lab" [queryParams]="{view: 'schema'}">Explore the live schema →</a>
     }

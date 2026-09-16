@@ -1,17 +1,15 @@
-import { DecimalPipe, JsonPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { form, FormField } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, combineLatest, of, startWith, Subject, switchMap, tap } from 'rxjs';
-interface Query {
-  label: string;
-  language: string;
-  command: string;
-  parameters: unknown;
-  plan?: string;
-}
+import {
+  InspectedQuery as Query,
+  QueryInspector,
+  queriesByLabel,
+} from '../query-inspector/query-inspector';
 interface Lookup {
   code: string;
   kind: string;
@@ -40,7 +38,7 @@ interface MapResult {
 }
 @Component({
   selector: 'app-event-tools',
-  imports: [RouterLink, FormField, DecimalPipe, JsonPipe],
+  imports: [RouterLink, FormField, DecimalPipe, QueryInspector],
   templateUrl: './event-tools.html',
   styleUrl: './event-tools.scss',
 })
@@ -63,7 +61,23 @@ export class EventTools {
     area: 'pour-over-bar',
   });
   protected readonly fields = form(this.model);
-  protected readonly queries = computed(() => this.lookup()?.queries ?? this.map()?.queries ?? []);
+  protected readonly lookupQueries = computed(() =>
+    queriesByLabel(this.lookup()?.queries, 'Persistent exact key lookup'),
+  );
+  protected readonly mapQueries = computed(() =>
+    queriesByLabel(
+      this.map()?.queries,
+      'Selected venue boundary',
+      'Native indexed containment and distance in meters',
+    ),
+  );
+  protected readonly vendorQueries = computed(() =>
+    queriesByLabel(
+      this.map()?.queries,
+      'Native indexed containment and distance in meters',
+      'Graph-linked coffees sold at nearby tables',
+    ),
+  );
   protected readonly points = computed(() => {
     const data = this.map();
     if (!data) return [];

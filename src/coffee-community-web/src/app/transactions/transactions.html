@@ -88,6 +88,7 @@
         </tbody>
       </table>
     </div>
+<app-query-inspector title="Transaction counts" [queries]="countQueries()" description="Repeated count statements capture before, inside-transaction, and after snapshots in execution order." />
     <p class="hint">
       “Inside transaction” is a captured read of staged writes. “After” is read after commit or
       rollback.
@@ -98,7 +99,7 @@
         @for (step of d.steps; track $index) {
           <li>{{ step }}</li>
         }
-      </ol>
+      </ol><app-query-inspector title="Tasting writes" [queries]="writeQueries()" />
     }
     <section class="comparison">
       <h2>One record, two query languages</h2>
@@ -113,11 +114,11 @@
       <div class="reads">
         <article>
           <h3>SQL</h3>
-          <pre>{{ d.sql | json }}</pre>
+          <pre>{{ d.sql | json }}</pre><app-query-inspector title="SQL record" [queries]="sqlQuery()" />
         </article>
         <article>
           <h3>Cypher</h3>
-          <pre>{{ d.cypher | json }}</pre>
+          <pre>{{ d.cypher | json }}</pre><app-query-inspector title="Cypher record" [queries]="sectionQueries('Read SQL-created Brew through Cypher')" />
         </article>
       </div>
       <a routerLink="/demo/lab" [queryParams]="{ view: 'queries', example: 'sql-transaction-brew' }"
@@ -131,17 +132,9 @@
       <h3>Inside transaction</h3>
       <pre>{{ d.staged | json }}</pre>
       <h3>After</h3>
-      <pre>{{ d.after | json }}</pre>
+      <pre>{{ d.after | json }}</pre><app-query-inspector title="Record snapshots" [queries]="snapshotQueries()" />
     </details>
-    <details>
-      <summary>Inspect transaction statements</summary>
-      @for (query of d.queries; track $index) {
-        <h3>{{ query.label }}</h3>
-        <small>{{ query.language }}</small>
-        <pre>{{ query.command }}</pre>
-        <pre>{{ query.parameters | json }}</pre>
-      }
-    </details>
+
   }
   <footer><a routerLink="/demo/story">← Back to the story</a></footer>
 </main>

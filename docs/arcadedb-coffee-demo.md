@@ -123,7 +123,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 **Activate demo:** [Open Maya's passport](http://localhost:4200/demo/passport/maya-chen)
 
-**Action:** Click **Love this cup** for the default `blueberry-bloom-v60` brew, then **Inspect queries**.
+**Action:** Click **Love this cup** for the default `blueberry-bloom-v60` brew, then **Inspect queries** beside **Your timeline**.
 
 **Look for:** Maya's love for Priya's Blueberry Bloom V60 appears in the timeline, alongside the executed query and parameters.
 
@@ -140,7 +140,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 **Activate demo:** [Open Maya's community network](http://localhost:4200/demo/network/maya-chen?target=luis-ortega)
 
-**Action:** Select **Show rematch candidates**.
+**Action:** Select **Show rematch candidates** in **Time for a rematch**.
 
 **Look for:** Luis Ortega beat Maya 10–7 in `maya-luis-rematch`.
 
@@ -174,7 +174,7 @@ Aspire starts, connects, observes, and resets every resource.
 
 **Activate demo:** [Open Maya's reconnect targets](http://localhost:4200/demo/network/maya-chen?target=luis-ortega)
 
-**Action:** Select **Show reconnect targets**.
+**Action:** Select **Show reconnect targets** in **Reconnect next**.
 
 **Look for:** Priya Nair remains Maya's reconnect target for the blueberry recipe.
 

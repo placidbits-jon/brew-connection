@@ -87,9 +87,7 @@
   }
   @if (data(); as data) {
     <div class="result-summary">
-      <button (click)="showQueries.set(!showQueries())">
-        {{ showQueries() ? 'Hide queries' : 'Inspect queries' }}
-      </button>
+      <app-query-inspector title="Search results" [queries]="data.queries" description="These queries retrieve the candidate set. The API combines the displayed keyword, vector, and community contributions to rank it." />
       <span>{{ data.results.length }} results for “{{ data.query }}”</span
       ><small
         >{{ data.model.model ?? data.model.provider }} · {{ data.model.dimensions }} dimensions ·
@@ -156,6 +154,9 @@
                 <li>{{ explanation }}</li>
               }
             </ul>
+            @if (result.graphContribution > 0 && evidenceQueries().length) {
+              <app-query-inspector [title]="result.name + ' community evidence'" [queries]="evidenceQueries()" description="This shared retrieval supplies community paths and vendor availability for the ranked candidates; the API selects the evidence for this result." />
+            }
           </article>
         </li>
       } @empty {
@@ -167,27 +168,3 @@
     <a routerLink="/demo/story">← Back to the story</a>
   </footer>
 </main>
-@if (showQueries()) {
-  <aside class="drawer" aria-label="Discovery query inspector">
-    <div class="drawer-heading">
-      <h2>Executed queries</h2>
-      <button (click)="showQueries.set(false)">Close</button>
-    </div>
-    <p>
-      Ranking combines the contributions shown on each result. These are the database statements
-      used to retrieve the evidence.
-    </p>
-    @for (query of data()?.queries ?? []; track $index) {
-      <article>
-        <h3>{{ query.label }}</h3>
-        <small>{{ query.language }}</small>
-        <pre>{{ query.command }}</pre>
-        <pre>{{ query.parameters | json }}</pre>
-        @if (query.plan) {
-          <h4>Query plan</h4>
-          <pre>{{ query.plan }}</pre>
-        }
-      </article>
-    }
-  </aside>
-}

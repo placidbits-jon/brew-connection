@@ -26,6 +26,11 @@ def expect_error(path, status, method='GET'):
 
 maya = request('/api/demo/story?persona=maya')
 assert maya['persona']['slug'] == 'maya-chen'
+assert len([q for q in maya['queries'] if q['label'] == 'Story counts']) == 5
+for label, edge in [('Story meetings', 'MET'), ('Story tastings', 'TASTED'), ('Story rematches', 'BEAT_IN_GAME')]:
+    query = next(q for q in maya['queries'] if q['label'] == label)
+    assert query['language'] == 'cypher' and edge in query['command']
+    assert query['parameters'] == {'slug': 'maya-chen'}
 assert any(person['slug'] == 'priya-nair' for person in maya['connections'])
 assert any(brew['slug'] == 'blueberry-bloom-v60' for brew in maya['tastings'])
 assert any(person['slug'] == 'luis-ortega' for person in maya['rematches'])
@@ -37,6 +42,7 @@ expect_error('/api/demo/story?persona=missing-persona', 404)
 expect_error('/api/demo/reset?profile=invalid', 400, 'POST')
 assert request('/api/demo/story?persona=maya') == maya
 schema = request('/api/demo/schema')
+assert schema['queries'] == [{'label': 'Schema metadata', 'language': 'sql', 'command': 'SELECT FROM schema:types', 'parameters': None}]
 assert any(record['name'] == 'Person' and record['type'] == 'vertex' for record in schema['types'])
 assert any(index['name'] == 'Person[slug]' and index['unique'] for index in schema['indexes'])
 assert len({index['name'] for index in schema['indexes']}) == len(schema['indexes'])

@@ -50,6 +50,11 @@
       <a [routerLink]="['/demo/brews', data.brew.slug]">Return to seeded series</a>
     </p>
     <p>{{ data.targetDescription }}</p>
+    <app-query-inspector
+      title="Brew context"
+      [queries]="brewContextQueries()"
+      description="Graph reads supply the brewer, recipe and pinned revision. The displayed sample count is the number of native samples returned; run status comes from the replay identity when replaying."
+    />
     <div class="legend">
       <span class="actual">━ Measured</span><span class="target">┄ Target</span>
     </div>
@@ -70,6 +75,11 @@
           <polyline [attr.points]="line('waterGrams', 300)" class="actual-line" />
           <path [attr.d]="'M' + (48 + (second() * 700) / 59) + ' 35V220'" class="cursor" />
         </svg>
+        <app-query-inspector
+          title="Water weight"
+          [queries]="waterQueries()"
+          description="Measured water comes from the native samples. The API interpolates target water between pinned recipe steps. The execution plan describes the separate bounded sample read shown here."
+        />
       </section>
       <section>
         <h3>Pour rate · grams per second</h3>
@@ -87,6 +97,11 @@
           <polyline [attr.points]="line('flowRate', 12)" class="actual-line" />
           <path [attr.d]="'M' + (48 + (second() * 700) / 59) + ' 35V220'" class="cursor" />
         </svg>
+        <app-query-inspector
+          title="Pour rate"
+          [queries]="flowQueries()"
+          description="Measured flow comes from the same native sample read as water weight. The target is stored on the brew. The execution plan describes the separate bounded sample read shown here."
+        />
       </section>
     </div>
     <label class="slider"
@@ -122,6 +137,11 @@
           <dd>{{ point.temperatureC | number: '1.1-1' }} °C</dd>
         </div>
       </dl>
+      <app-query-inspector
+        title="Selected sample"
+        [queries]="sampleQueries()"
+        description="The selected second is filtered from the returned samples in the browser. The API interpolates water targets from pinned recipe steps; the browser subtracts target water from measured water."
+      />
     } @else {
       <p role="status">Waiting for sample at {{ second() }} seconds.</p>
     }
@@ -132,6 +152,11 @@
           At {{ anomaly.second }} seconds, measured flow is {{ anomaly.actual }} g/s against a
           {{ anomaly.target }} g/s target.
         </p>
+        <app-query-inspector
+          title="Pour anomaly"
+          [queries]="anomalyQueries()"
+          description="The API subtracts the brew flow target from each native sample and selects the largest positive deviation; there is no separate anomaly query."
+        />
       </article>
     }
     <p class="hint">{{ data.indexDescription }}</p>
@@ -144,6 +169,11 @@
         @if (counter(); as count) {
           <strong class="counter-value">{{ count.value }}</strong>
           <p>{{ count.restartBehavior }}</p>
+          <app-query-inspector
+            title="Live counter"
+            [queries]="counterQueries()"
+            description="The latest GET or INCR response supplies the displayed value. This counter is held in ArcadeDB server memory."
+          />
           @if (count.delta) {
             <p>Last increment: +{{ count.delta }}</p>
           }
@@ -163,6 +193,7 @@
       <a routerLink="/demo/map" [queryParams]="{ area: data.area.slug }">{{ data.area.name }}</a> ·
       16:00–18:00 UTC on September 14, 2026
     </p>
+    <app-query-inspector title="Event context" [queries]="eventContextQueries()" />
     <dl class="metrics">
       <div>
         <dt>Recorded events</dt>
@@ -181,6 +212,11 @@
         <dd>{{ data.ratePerMinute | number: '1.0-2' }}</dd>
       </div>
     </dl>
+    <app-query-inspector
+      title="Event metrics"
+      [queries]="eventMetricQueries()"
+      description="Native aggregation supplies sample count, total count and percentile. The API divides total count by the 120-minute window for events per minute."
+    />
     <form (submit)="changeBuckets($event)">
       <label
         >Bucket size<select aria-label="Bucket size" [formField]="fields.bucketMinutes">
@@ -213,10 +249,20 @@
         · {{ item.ratePerMinute | number: '1.0-2' }} per minute
       </p>
     }
+    <app-query-inspector
+      title="Event buckets"
+      [queries]="bucketQueries()"
+      description="Native time buckets supply the chart counts. The API divides each count by the selected bucket duration for its rate. The plan describes the separate bounded event sample read shown here."
+    />
     <p class="hint">
       {{ data.rateDescription }} Native brew water rate:
       {{ data.waterGramsPerSecond | number: '1.0-2' }} g/s.
     </p>
+    <app-query-inspector
+      title="Native water rate"
+      [queries]="rateQueries()"
+      description="ArcadeDB ts.rate calculates the seeded brew water-weight slope."
+    />
     <section class="examples">
       <article>
         <h3>Downsample the view</h3>
@@ -239,6 +285,7 @@
             }
           </tbody>
         </table>
+        <app-query-inspector title="Downsampling" [queries]="downsamplingQueries()" />
       </article>
       <article>
         <h3>Retention in action</h3>
@@ -256,24 +303,14 @@
           {{ busy() ? 'Starting…' : 'Run retention example' }}
         </button>
         <p class="hint">The view refreshes every five seconds while you stay on this page.</p>
+        <app-query-inspector
+          title="Retention"
+          [queries]="retentionQueries()"
+          description="These statements belong to the response supplying the displayed retention status. After a run, the next poll replaces its setup statements with the latest availability and count reads. The API derives waiting or complete from the remaining count; retention duration and inserted count describe the configured example."
+        />
       </article>
     </section>
     <p class="hint">{{ data.indexDescription }}</p>
-  }
-  @if (queries().length) {
-    <details class="queries">
-      <summary>Inspect queries</summary>
-      @if (brew()?.indexPlan ?? pulse()?.indexPlan; as plan) {
-        <h3>Native time-series execution plan</h3>
-        <pre>{{ plan }}</pre>
-      }
-      @for (query of queries(); track $index) {
-        <h3>{{ query.label }}</h3>
-        <small>{{ query.language }}</small>
-        <pre>{{ query.command }}</pre>
-        <pre>{{ query.parameters | json }}</pre>
-      }
-    </details>
   }
   <footer><a routerLink="/demo/story">← Back to the story</a></footer>
 </main>

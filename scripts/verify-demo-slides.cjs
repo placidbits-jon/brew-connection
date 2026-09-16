@@ -75,14 +75,19 @@ const actions = {
       page.locator(".timeline").locator("li").filter({ hasText: "loved" }),
       "Blueberry Bloom V60",
     );
-    await button("Inspect queries").click();
+    await button("Inspect Timeline queries").click();
     await visible(
-      page.getByRole("complementary", { name: "Executed queries" }),
+      page.getByRole("region", { name: "Timeline queries" }),
       "Parameters",
     );
   },
   "Who beat me?": async () => {
+    await checked(page.locator('#rematch-results')).toHaveCount(0);
     await button("Show rematch candidates").click();
+    await button('Inspect Rematch candidates queries').click();
+    await visible(page.getByRole('region', {name:'Rematch candidates queries'}), 'BEAT_IN_GAME');
+    await checked(page.getByRole('region', {name:'Rematch candidates queries'})).not.toContainText('WANTS_TO_RECONNECT');
+    await button('Hide Rematch candidates queries').click();
     await visible(page.locator("#rematches"), "Luis Ortega");
     await visible(page.locator("#rematches"), "Your score 7 · Their score 10");
     await visible(page.locator("#rematches"), "maya-luis-rematch");
@@ -96,7 +101,11 @@ const actions = {
     ).toHaveText(["Maya Chen", "Priya Nair", "Luis Ortega"]);
   },
   "People to reconnect with": async () => {
+    await checked(page.locator('#reconnect-results')).toHaveCount(0);
     await button("Show reconnect targets").click();
+    await button('Inspect Reconnect targets queries').click();
+    await visible(page.getByRole('region', {name:'Reconnect targets queries'}), 'WANTS_TO_RECONNECT');
+    await button('Hide Reconnect targets queries').click();
     await visible(page.locator("#reconnects"), "Priya Nair");
     await visible(page.locator("#reconnects"), /blueberry/i);
   },
@@ -411,6 +420,15 @@ const actions = {
       try {
         await page.goto(target.href);
         await actions[slide.title]();
+        for (const inspector of await page.locator('app-query-inspector:visible').all()) {
+          const toggle = inspector.getByRole('button');
+          await checked(toggle).toBeEnabled();
+          if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+          await checked(inspector.getByRole('region')).toBeVisible();
+          await checked(inspector.locator('pre').first()).not.toBeEmpty();
+          await toggle.click();
+          await checked(inspector.getByRole('region')).toHaveCount(0);
+        }
         await checked(page.getByRole("alert")).toHaveCount(0);
         assert.deepEqual(report.errors, [], "No uncaught browser errors");
         if (process.env.DEMO_CAPTURE_SLIDES === "1")

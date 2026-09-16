@@ -33,6 +33,7 @@
         </h2>
         <p>{{ result.code }} → {{ result.target.type }} · {{ result.target.slug }}</p>
         <p>The indexed record survives an ArcadeDB restart.</p>
+        <app-query-inspector title="Code lookup" [queries]="lookupQueries()" />
       </article>
     }
   } @else {
@@ -83,32 +84,44 @@
             }
           </svg>
           <p>{{ data.radius }} m radius · {{ data.results.length }} vendor tables</p>
+          <app-query-inspector
+            title="Nearby map"
+            [queries]="mapQueries()"
+            description="ArcadeDB filters vendor coordinates by the stored boundary and distance. The browser projects those coordinates onto this approximate local map; the displayed count is the returned result length."
+          />
         </section>
-        <ol class="places">
-          @for (place of data.results; track place.slug; let rank = $index) {
-            <li>
-              <article [class.selected]="selected() === place.slug">
-                <button class="place-name" (click)="selected.set(place.slug)">
-                  {{ rank + 1 }}. {{ place.name }}
-                </button>
-                <p>
-                  <strong>{{ place.distanceMeters | number: '1.1-1' }} m</strong> ·
-                  {{ place.contained ? 'Inside selected area' : 'Outside selected area' }} ·
-                  {{ place.available ? 'Available' : 'Unavailable' }}
-                </p>
-                <ul>
-                  @for (coffee of place.coffees; track coffee.slug) {
-                    <li>
-                      <a [routerLink]="coffee.route">{{ coffee.name }}</a>
-                    </li>
-                  }
-                </ul>
-              </article>
-            </li>
-          } @empty {
-            <li>No vendor tables in this search. Try a larger radius or another location.</li>
-          }
-        </ol>
+        <section aria-label="Vendor results">
+          <ol class="places">
+            @for (place of data.results; track place.slug; let rank = $index) {
+              <li>
+                <article [class.selected]="selected() === place.slug">
+                  <button class="place-name" (click)="selected.set(place.slug)">
+                    {{ rank + 1 }}. {{ place.name }}
+                  </button>
+                  <p>
+                    <strong>{{ place.distanceMeters | number: '1.1-1' }} m</strong> ·
+                    {{ place.contained ? 'Inside selected area' : 'Outside selected area' }} ·
+                    {{ place.available ? 'Available' : 'Unavailable' }}
+                  </p>
+                  <ul>
+                    @for (coffee of place.coffees; track coffee.slug) {
+                      <li>
+                        <a [routerLink]="coffee.route">{{ coffee.name }}</a>
+                      </li>
+                    }
+                  </ul>
+                </article>
+              </li>
+            } @empty {
+              <li>No vendor tables in this search. Try a larger radius or another location.</li>
+            }
+          </ol>
+          <app-query-inspector
+            title="Vendor results"
+            [queries]="vendorQueries()"
+            description="The same spatial statement supplies map positions and vendor distances. Graph-linked coffees are grouped by vendor in the API."
+          />
+        </section>
       </div>
     }
   }
@@ -117,20 +130,6 @@
   }
   @if (error()) {
     <p role="alert" class="error">{{ error() }}</p>
-  }
-  @if (queries().length) {
-    <details class="queries">
-      <summary>Inspect queries</summary>
-      @for (query of queries(); track $index) {
-        <h3>{{ query.label }}</h3>
-        <small>{{ query.language }}</small>
-        <pre>{{ query.command }}</pre>
-        <pre>{{ query.parameters | json }}</pre>
-        @if (query.plan) {
-          <pre>{{ query.plan }}</pre>
-        }
-      }
-    </details>
   }
   <footer><a routerLink="/demo/story">← Back to the story</a></footer>
 </main>

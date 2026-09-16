@@ -1,3 +1,4 @@
+import { QueryInspector, InspectedQuery } from '../query-inspector/query-inspector';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DecimalPipe, JsonPipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
@@ -17,6 +18,7 @@ interface SchemaIndex {
   properties?: string[];
 }
 interface Schema {
+  queries?: InspectedQuery[];
   types: SchemaType[];
   indexes: SchemaIndex[];
 }
@@ -49,7 +51,7 @@ interface Execution {
 }
 @Component({
   selector: 'app-lab',
-  imports: [RouterLink, JsonPipe, DecimalPipe],
+  imports: [RouterLink, JsonPipe, DecimalPipe, QueryInspector],
   templateUrl: './lab.html',
   styleUrl: './lab.scss',
 })

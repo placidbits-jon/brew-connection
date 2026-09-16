@@ -10,7 +10,7 @@ Start the application using the [README](../README.md), then reset to the story 
 4. Find the shortest path to Luis: Maya Chen → Priya Nair → Luis Ortega. The badge scan in step 1 does not create a shortcut to Luis.
 5. Inspect reconnect targets. Priya is Maya's authored target for a conversation about the blueberry recipe.
 
-Use **Inspect queries** on each screen to see the SQL or Cypher and parameter values executed for the displayed results. After a write, the drawer also retains the mutation's statements. Shortest paths use a breadth-first traversal in the API over the actual `MET` edges read with SQL; the query label identifies that computation. Meetings are treated as connections in both directions.
+Use **Inspect queries** beside a section to see only the SQL or Cypher and parameters used for that section. After a write, a separate inspector beside its action retains the saved operation's statements. Rematch candidates and reconnect targets start collapsed; their **Show**/**Hide** controls reveal and hide those results. Shortest paths use a breadth-first traversal in the API over the actual `MET` edges read with SQL; the query label identifies that computation. Meetings are treated as connections in both directions.
 
 ## Try a new game
 

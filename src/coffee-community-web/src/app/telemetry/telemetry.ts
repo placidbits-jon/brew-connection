@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe, JsonPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,12 +16,11 @@ import {
   takeWhile,
   timer,
 } from 'rxjs';
-interface Query {
-  label: string;
-  language: string;
-  command: string;
-  parameters: unknown;
-}
+import {
+  InspectedQuery as Query,
+  QueryInspector,
+  queriesByLabel,
+} from '../query-inspector/query-inspector';
 interface RecordLink {
   slug: string;
   name: string;
@@ -92,7 +91,7 @@ interface Counter {
 }
 @Component({
   selector: 'app-telemetry',
-  imports: [RouterLink, FormField, DatePipe, DecimalPipe, JsonPipe],
+  imports: [RouterLink, FormField, DatePipe, DecimalPipe, QueryInspector],
   templateUrl: './telemetry.html',
   styleUrl: './telemetry.scss',
 })
@@ -120,10 +119,75 @@ export class Telemetry {
   protected readonly sample = computed(() =>
     this.brew()?.samples.find((s) => s.second === this.second()),
   );
-  protected readonly queries = computed(() => [
-    ...(this.brew()?.queries ?? this.pulse()?.queries ?? []),
-    ...(this.counter()?.queries ?? []),
-  ]);
+  protected readonly retentionQueries = signal<Query[]>([]);
+  protected readonly counterQueries = computed(() =>
+    queriesByLabel(this.counter()?.queries, 'ArcadeDB Redis commands over HTTP; server RAM only'),
+  );
+  protected readonly brewContextQueries = computed(() =>
+    queriesByLabel(
+      this.brew()?.queries,
+      'Stable brew',
+      'Replay identity',
+      'Brewer from graph',
+      'Recipe from graph',
+      'Pinned recipe revision',
+      'Native time-series tag and time range',
+    ),
+  );
+  protected readonly waterQueries = computed(() =>
+    this.brewQueries(
+      'Native time-series tag and time range',
+      'Pinned recipe revision',
+      'Native time-series query plan',
+    ),
+  );
+  protected readonly flowQueries = computed(() =>
+    this.brewQueries(
+      'Native time-series tag and time range',
+      'Stable brew',
+      'Native time-series query plan',
+    ),
+  );
+  protected readonly sampleQueries = computed(() =>
+    this.brewQueries(
+      'Native time-series tag and time range',
+      'Stable brew',
+      'Pinned recipe revision',
+    ),
+  );
+  protected readonly anomalyQueries = computed(() =>
+    this.brewQueries('Native time-series tag and time range', 'Stable brew'),
+  );
+  protected readonly eventContextQueries = computed(() =>
+    queriesByLabel(this.pulse()?.queries, 'Event tag link', 'Area tag link'),
+  );
+  protected readonly eventMetricQueries = computed(() =>
+    queriesByLabel(this.pulse()?.queries, 'Native percentile'),
+  );
+  protected readonly bucketQueries = computed(() =>
+    queriesByLabel(
+      this.pulse()?.queries,
+      'Native time buckets',
+      'Native time-series query plan',
+    ).map((query) =>
+      query.label === 'Native time-series query plan'
+        ? { ...query, plan: this.pulse()?.indexPlan }
+        : query,
+    ),
+  );
+  protected readonly rateQueries = computed(() =>
+    queriesByLabel(this.pulse()?.queries, 'Native water rate'),
+  );
+  protected readonly downsamplingQueries = computed(() =>
+    queriesByLabel(this.pulse()?.queries, 'Native query-time downsampling'),
+  );
+  private brewQueries(...labels: string[]): Query[] {
+    return queriesByLabel(this.brew()?.queries, ...labels).map((query) =>
+      query.label === 'Native time-series query plan'
+        ? { ...query, plan: this.brew()?.indexPlan }
+        : query,
+    );
+  }
   protected readonly maxBucket = computed(() =>
     Math.max(1, ...(this.pulse()?.buckets.map((b) => b.count) ?? [])),
   );
@@ -142,6 +206,8 @@ export class Telemetry {
           this.model.set({ bucketMinutes: q.get('bucketMinutes') ?? '10' });
           this.brew.set(null);
           this.pulse.set(null);
+          this.retentionQueries.set([]);
+          this.counter.set(null);
           this.error.set('');
           this.actionError.set('');
           this.loading.set(true);
@@ -178,6 +244,13 @@ export class Telemetry {
             tap((d) => {
               if (context === this.context) {
                 this.pulse.set(d);
+                this.retentionQueries.set(
+                  queriesByLabel(
+                    d.queries,
+                    'Retention example availability',
+                    'Native retention result',
+                  ),
+                );
                 this.loading.set(false);
               }
             }),
@@ -268,9 +341,8 @@ export class Telemetry {
         next: (d) => {
           if (context !== this.context) return;
           this.busy.set(false);
-          this.pulse.update((p) =>
-            p ? { ...p, retention: d.retention, queries: [...p.queries, ...d.queries] } : p,
-          );
+          this.retentionQueries.set(d.queries);
+          this.pulse.update((p) => (p ? { ...p, retention: d.retention } : p));
         },
         error: (e) => this.actionFailed(context, e),
       });

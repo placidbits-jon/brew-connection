@@ -1,4 +1,5 @@
-import { DatePipe, JsonPipe } from '@angular/common';
+import { QueryInspector, queriesByLabel } from '../query-inspector/query-inspector';
+import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -12,7 +13,7 @@ interface Passport { person: Person; timeline: {kind: string; title: string; occ
 interface Network { person: Person; connections: Person[]; paths: {slugs: string[]; names: string[]}[]; sharedInterests: (Person & {interests: string[]})[]; rematches: (Person & {score: number; opponentScore: number; sessionSlug: string})[]; reconnects: (Person & {context?: string})[]; queries: Query[] }
 
 @Component({
-  selector: 'app-community', imports: [RouterLink, FormField, DatePipe, JsonPipe],
+  selector: 'app-community', imports: [RouterLink, FormField, DatePipe, QueryInspector],
   templateUrl: './community.html', styleUrl: './community.scss',
 })
 export class Community {
@@ -29,9 +30,13 @@ export class Community {
   protected readonly busy = signal(false);
   protected readonly error = signal('');
   protected readonly message = signal('');
-  protected readonly showQueries = signal(false);
+  protected readonly showRematches = signal(false);
+  protected readonly showReconnects = signal(false);
+  protected readonly mutationSection = signal('');
+  protected sectionQueries(...labels: string[]) { return queriesByLabel(this.network()?.queries ?? this.passport()?.queries, ...labels); }
+  protected readonly timelineQueries = computed(() => (this.passport()?.queries ?? []).filter(q => q.label.startsWith('Passport ')));
+  protected savedQueries(...actions: string[]) { return actions.includes(this.mutationSection()) ? this.mutationQueries() : []; }
   protected readonly mutationQueries = signal<Query[]>([]);
-  protected readonly queries = computed(() => [...this.mutationQueries(), ...(this.network()?.queries ?? this.passport()?.queries ?? [])]);
   protected readonly meetings = computed(() => this.passport()?.timeline.filter(item => item.kind === 'MET') ?? []);
   protected readonly person = computed(() => this.network()?.person ?? this.passport()?.person);
   protected readonly model = signal({badgeCode: 'badge-0003', context: 'Coffee and conversation', location: 'Community coffee bar', brewSlug: 'blueberry-bloom-v60', targetSlug: 'priya-nair', pathTarget: 'luis-ortega', sessionSlug: 'demo-coffee-cards', gameSlug: 'coffee-cards', opponentSlug: 'priya-nair', winnerScore: 21, loserScore: 17});
@@ -41,7 +46,7 @@ export class Community {
     combineLatest([this.route.paramMap, this.route.queryParamMap, this.reload.pipe(startWith(undefined))]).pipe(
       tap(([params, query]) => {
         const slug = params.get('personSlug')!;
-        if (slug !== this.slug()) { this.message.set(''); this.mutationQueries.set([]); }
+        if (slug !== this.slug() || this.mode() !== this.route.snapshot.data['mode']) { this.message.set(''); this.mutationQueries.set([]); this.mutationSection.set(''); this.showRematches.set(false); this.showReconnects.set(false); }
         this.slug.set(slug);
         this.mode.set(this.route.snapshot.data['mode']);
         this.model.update(value => ({...value, pathTarget: query.get('target') ?? 'luis-ortega'}));
@@ -79,7 +84,7 @@ export class Community {
     };
     this.busy.set(true); this.error.set(''); this.message.set('');
     this.http.post<{message: string; queries: Query[]}>(`/api/demo/graph/${action}`, bodies[action]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: result => { this.busy.set(false); this.message.set(result.message); this.mutationQueries.set(result.queries); this.reload.next(); },
+      next: result => { if (personSlug !== this.slug()) return; this.busy.set(false); this.message.set(result.message); this.mutationQueries.set(result.queries); this.mutationSection.set(action); this.reload.next(); },
       error: error => { this.busy.set(false); this.error.set(this.errorText(error)); },
     });
   }

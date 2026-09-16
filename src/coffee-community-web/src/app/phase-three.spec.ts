@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
 
-const query = {label: 'Timeline traversal', language: 'sql', command: 'SELECT expand(outE()) FROM Person WHERE slug = :personSlug', parameters: {personSlug: 'maya-chen'}};
+const query = {label: 'Passport MET', language: 'sql', command: 'SELECT expand(outE()) FROM Person WHERE slug = :personSlug', parameters: {personSlug: 'maya-chen'}};
 const passport = {person: {slug: 'maya-chen', name: 'Maya Chen'}, timeline: [{kind:'MET',title:'Met Priya Nair',occurredAt:'2026-09-14T12:00:00Z',context:'Coffee bar',slug:'priya-nair'}], queries: [query]};
 
 describe('Community graph routes', () => {
@@ -30,7 +30,7 @@ describe('Community graph routes', () => {
     expect(harness.routeNativeElement!.textContent).toContain('Met Priya Nair');
     button(harness, 'Inspect queries').click();
     await harness.fixture.whenStable();
-    const drawer = harness.routeNativeElement!.querySelector('aside')!;
+    const drawer = harness.routeNativeElement!.querySelector('[role=region]')!;
     expect(drawer.textContent).toContain(query.command);
     expect(drawer.textContent).toContain('sql');
     expect(drawer.textContent).toContain('maya-chen');
@@ -51,7 +51,7 @@ describe('Community graph routes', () => {
     expect(meetings.textContent).toContain('Community coffee bar');
     button(harness, 'Inspect queries').click();
     await harness.fixture.whenStable();
-    expect(harness.routeNativeElement!.querySelector('aside')!.textContent).toContain('CREATE EDGE MET');
+    expect(harness.routeNativeElement!.querySelector('[role=region]')!.textContent).toContain('CREATE EDGE MET');
   });
 
   it.each([
@@ -88,13 +88,35 @@ describe('Community graph routes', () => {
     expect(harness.routeNativeElement!.querySelector('.path')!.textContent).toContain('Luis Ortega');
     expect(harness.routeNativeElement!.textContent).toContain('2 connections away');
     expect(harness.routeNativeElement!.textContent).toContain('Pour-over');
+    expect(harness.routeNativeElement!.querySelector('#rematches')!.textContent).not.toContain('Alex Rivera');
+    button(harness, 'Show rematch candidates').click();
+    await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.querySelector('#rematches')!.textContent).toContain('Alex Rivera');
     expect(harness.routeNativeElement!.querySelector('#rematches')!.textContent).toContain('Your score 17 · Their score 21');
     expect(harness.routeNativeElement!.querySelector('#rematches')!.textContent).toContain('seed-game');
     harness.routeNativeElement!.querySelector('.path-form')!.dispatchEvent(new Event('submit', {cancelable:true}));
     http.expectOne('/api/demo/network/maya-chen?target=luis-ortega').flush({person:passport.person,connections:[],paths:[],sharedInterests:[],rematches:[],reconnects:[{slug:'priya-nair',name:'Priya Nair'}],queries:[]});
     await harness.fixture.whenStable();
+    button(harness, 'Show reconnect targets').click();
+    await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.querySelector('#reconnects')!.textContent).toContain('Priya Nair');
+  });
+
+  it('toggles network results and inspects only that section', async () => {
+    const h = await RouterTestingHarness.create('/demo/network/maya-chen');
+    const rematchQuery = {...query, label:'Who beat me', command:'MATCH (winner)-[:BEAT_IN_GAME]->(person)'};
+    http.expectOne('/api/demo/network/maya-chen?target=luis-ortega').flush({person:passport.person, connections:[], paths:[], sharedInterests:[], rematches:[{name:'Luis Ortega',score:10,opponentScore:7,sessionSlug:'game'}],reconnects:[], queries:[rematchQuery,{...query,label:'People to reconnect with',command:'MATCH (person)-[:WANTS_TO_RECONNECT]->(other)'}]});
+    await h.fixture.whenStable();
+    const panel = h.routeNativeElement!.querySelector('#rematches')!;
+    expect(panel.textContent).not.toContain('Luis Ortega');
+    button(h,'Show rematch candidates').click(); await h.fixture.whenStable();
+    expect(panel.textContent).toContain('Luis Ortega');
+    button(h,'Hide rematch candidates').click(); await h.fixture.whenStable();
+    expect(panel.textContent).not.toContain('Luis Ortega');
+    (panel.querySelector('app-query-inspector button') as HTMLButtonElement).click(); await h.fixture.whenStable();
+    expect(panel.textContent).toContain(rematchQuery.command);
+    expect(panel.textContent).not.toContain('WANTS_TO_RECONNECT');
+    expect(panel.querySelector('app-query-inspector button')!.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('keeps the shortest-path form available to correct an unknown target', async () => {

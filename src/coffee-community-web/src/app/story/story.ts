@@ -1,3 +1,4 @@
+import { QueryInspector, InspectedQuery, queriesByLabel } from '../query-inspector/query-inspector';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -17,6 +18,7 @@ interface DemoStatus {
 
 interface StoryRecord { slug: string; name: string; context?: string }
 interface SeedStory {
+  queries?: InspectedQuery[];
   profile: string;
   persona: StoryRecord & { role: string };
   counts: { type: string; count: number }[];
@@ -27,7 +29,7 @@ interface SeedStory {
 
 @Component({
   selector: 'app-story',
-  imports: [RouterLink],
+  imports: [RouterLink, QueryInspector],
   templateUrl: './story.html',
   styleUrl: './story.scss',
 })
@@ -36,6 +38,7 @@ export class Story implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly story = signal<SeedStory | null>(null);
+  protected sectionQueries(...labels: string[]) { return queriesByLabel(this.story()?.queries, ...labels); }
   protected readonly storyLoading = signal(true);
   protected readonly storyError = signal(false);
   protected readonly resetError = signal(false);

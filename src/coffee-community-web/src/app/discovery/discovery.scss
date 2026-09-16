@@ -10,8 +10,7 @@ main {
 }
 header,
 footer,
-.result-summary,
-.drawer-heading {
+.result-summary {
   display: flex;
   justify-content: space-between;
   gap: 20px;
@@ -206,22 +205,8 @@ footer {
   padding-top: 24px;
   border-top: 1px solid #514b41;
 }
-.drawer {
-  position: fixed;
-  inset: 0 0 0 auto;
-  width: min(700px, 100%);
-  box-sizing: border-box;
-  overflow: auto;
-  padding: 28px;
-  background: #211d18;
-  border-left: 1px solid #d68b56;
-  box-shadow: -20px 0 80px #0009;
-  z-index: 10;
-}
-.drawer article {
-  border-top: 1px solid #615648;
-  padding-block: 14px;
-}
+
+
 pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

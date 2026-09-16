@@ -14,6 +14,7 @@
         @for (path of network()!.paths; track $index) { <ol class="path" aria-label="Shortest connection path">@for (name of path.names; track $index) { <li>{{ name }}</li> }</ol><p>{{ path.slugs.length - 1 }} connection{{ path.slugs.length === 2 ? '' : 's' }} away</p> }
         @empty { <p>No connection path found yet.</p> }
         }
+      <app-query-inspector title="Shortest path" [queries]="sectionQueries('Resolve Person', 'Social edges for breadth-first shortest-path traversal in API', 'People and shared interests')" description="The API computes the shortest path from the returned meeting edges and resolves names from the people records." />
       </section>
   }
 
@@ -26,40 +27,34 @@
           <label>Where did you meet?<input [formField]="fields.location"></label>
           <button class="primary" type="submit">{{ busy() ? 'Saving…' : 'Scan badge' }}</button>
         </fieldset></form>
+        @if (savedQueries('meet').length) { <app-query-inspector title="Saved meeting" [queries]="savedQueries('meet')" /> }
       </section>
       <section class="card narrow" aria-label="Recent meetings"><h2>Recent meetings</h2><ul>
         @for (meeting of meetings(); track $index) { <li><strong>{{ meeting.title }}</strong><small>{{ meeting.context }}</small><small>{{ meeting.location }}</small><time>{{ meeting.occurredAt | date:'medium' }}</time></li> }
         @empty { <li>No meetings yet. Scan a badge to start a conversation.</li> }
-      </ul></section>
+      </ul><app-query-inspector title="Recent meetings" [queries]="sectionQueries('Passport MET')" /></section>
     }
     @if (mode() === 'passport') {
       <div class="columns">
         <section><h2>Your timeline</h2><ol class="timeline">
           @for (item of passport()!.timeline; track $index) { <li><span class="kicker">{{ item.kind.replaceAll('_', ' ') }}</span><h3>{{ item.title }}</h3><p>{{ item.context }}</p>@if (item.location) { <p>{{ item.location }}</p> }<time>{{ item.occurredAt | date:'medium' }}</time></li> }
           @empty { <li>Your next conversation or cup starts the story.</li> }
-        </ol></section>
+        </ol><app-query-inspector title="Timeline" [queries]="timelineQueries()" /></section>
         <section class="actions"><h2>Add a moment</h2>
-          <article class="card"><h3>A cup to remember</h3><label>Brew slug<input [formField]="fields.brewSlug"></label><div class="buttons"><button [disabled]="busy()" (click)="save('tastings')">Log tasting</button><button [disabled]="busy()" (click)="save('loves')">Love this cup</button></div></article>
-          <article class="card"><h3>Keep the conversation going</h3><label>Person slug<input [formField]="fields.targetSlug"></label><button [disabled]="busy()" (click)="save('reconnects')">Save reconnect</button></article>
-          <article class="card"><h3>A friendly game</h3><label>Session slug<input [formField]="fields.sessionSlug"></label><label>Game slug<input [formField]="fields.gameSlug"></label><label>Opponent slug<input [formField]="fields.opponentSlug"></label><button [disabled]="busy()" (click)="save('game-sessions')">Start game</button><p>Record a win for {{ person()!.name }}.</p><div class="scores"><label>Your score<input type="number" [formField]="fields.winnerScore"></label><label>Opponent score<input type="number" [formField]="fields.loserScore"></label></div><button [disabled]="busy()" (click)="save('game-results')">Record result</button></article>
+          <article class="card"><h3>A cup to remember</h3><label>Brew slug<input [formField]="fields.brewSlug"></label><div class="buttons"><button [disabled]="busy()" (click)="save('tastings')">Log tasting</button><button [disabled]="busy()" (click)="save('loves')">Love this cup</button></div>@if (savedQueries('tastings', 'loves').length) { <app-query-inspector title="Saved cup" [queries]="savedQueries('tastings', 'loves')" /> }</article>
+          <article class="card"><h3>Keep the conversation going</h3><label>Person slug<input [formField]="fields.targetSlug"></label><button [disabled]="busy()" (click)="save('reconnects')">Save reconnect</button>@if (savedQueries('reconnects').length) { <app-query-inspector title="Saved reconnect" [queries]="savedQueries('reconnects')" /> }</article>
+          <article class="card"><h3>A friendly game</h3><label>Session slug<input [formField]="fields.sessionSlug"></label><label>Game slug<input [formField]="fields.gameSlug"></label><label>Opponent slug<input [formField]="fields.opponentSlug"></label><button [disabled]="busy()" (click)="save('game-sessions')">Start game</button><p>Record a win for {{ person()!.name }}.</p><div class="scores"><label>Your score<input type="number" [formField]="fields.winnerScore"></label><label>Opponent score<input type="number" [formField]="fields.loserScore"></label></div><button [disabled]="busy()" (click)="save('game-results')">Record result</button>@if (savedQueries('game-sessions', 'game-results').length) { <app-query-inspector title="Saved game" [queries]="savedQueries('game-sessions', 'game-results')" /> }</article>
         </section>
       </div>
     }
     @if (network(); as network) {
-      <nav aria-label="Network sections"><button (click)="rematches.scrollIntoView()">Show rematch candidates</button><button (click)="reconnects.scrollIntoView()">Show reconnect targets</button></nav>
       <div class="network-grid">
-        <section class="card"><h2>People you’ve met</h2><ul>@for (person of network.connections; track person.slug) { <li>{{ person.name }}</li> } @empty { <li>No meetings yet.</li> }</ul><a [routerLink]="['/demo/meet', slug()]">Meet someone →</a></section>
-        <section class="card"><h2>Shared interests</h2><ul class="interest-list">@for (person of network.sharedInterests; track person.slug) { <li>{{ person.name }}<small>{{ person.interests.join(' · ') }}</small></li> } @empty { <li>No shared interests found yet.</li> }</ul></section>
-        <section class="card" id="rematches" #rematches><h2>Time for a rematch</h2><ul>@for (person of network.rematches; track $index) { <li>{{ person.name }}<small>Your score {{ person.opponentScore }} · Their score {{ person.score }}</small><small>Session: {{ person.sessionSlug }}</small></li> } @empty { <li>No losses to avenge yet.</li> }</ul></section>
-        <section class="card" id="reconnects" #reconnects><h2>Reconnect next</h2><ul>@for (person of network.reconnects; track person.slug) { <li>{{ person.name }}<small>{{ person.context }}</small></li> } @empty { <li>No reconnects saved yet.</li> }</ul></section>
+        <section class="card"><h2>People you’ve met</h2><ul>@for (person of network.connections; track person.slug) { <li>{{ person.name }}</li> } @empty { <li>No meetings yet.</li> }</ul><a [routerLink]="['/demo/meet', slug()]">Meet someone →</a><app-query-inspector title="People met" [queries]="sectionQueries('Direct meetings (both directions)')" /></section>
+        <section class="card"><h2>Shared interests</h2><ul class="interest-list">@for (person of network.sharedInterests; track person.slug) { <li>{{ person.name }}<small>{{ person.interests.join(' · ') }}</small></li> } @empty { <li>No shared interests found yet.</li> }</ul><app-query-inspector title="Shared interests" [queries]="sectionQueries('Resolve Person', 'People and shared interests')" description="The API intersects the selected person's interests with the returned people records." /></section>
+        <section class="card" id="rematches"><h2>Time for a rematch</h2><button (click)="showRematches.set(!showRematches())" [attr.aria-expanded]="showRematches()" aria-controls="rematch-results">{{showRematches() ? 'Hide rematch candidates' : 'Show rematch candidates'}}</button>@if (showRematches()) {<div id="rematch-results"><ul>@for (person of network.rematches; track $index) { <li>{{ person.name }}<small>Your score {{ person.opponentScore }} · Their score {{ person.score }}</small><small>Session: {{ person.sessionSlug }}</small></li> } @empty { <li>No losses to avenge yet.</li> }</ul></div>}<app-query-inspector title="Rematch candidates" [queries]="sectionQueries('Who beat me')" /></section>
+        <section class="card" id="reconnects"><h2>Reconnect next</h2><button (click)="showReconnects.set(!showReconnects())" [attr.aria-expanded]="showReconnects()" aria-controls="reconnect-results">{{showReconnects() ? 'Hide reconnect targets' : 'Show reconnect targets'}}</button>@if (showReconnects()) {<div id="reconnect-results"><ul>@for (person of network.reconnects; track person.slug) { <li>{{ person.name }}<small>{{ person.context }}</small></li> } @empty { <li>No reconnects saved yet.</li> }</ul></div>}<app-query-inspector title="Reconnect targets" [queries]="sectionQueries('People to reconnect with')" /></section>
       </div>
     }
   }
-  <footer><button (click)="showQueries.set(!showQueries())" [attr.aria-expanded]="showQueries()" aria-controls="queries">{{ showQueries() ? 'Hide queries' : 'Inspect queries' }}</button><span>Live results from ArcadeDB</span></footer>
-  @if (showQueries()) {
-    <aside id="queries" aria-label="Executed queries" class="drawer"><div class="drawer-heading"><h2>Executed queries</h2><button (click)="showQueries.set(false)">Close queries</button></div><p>Queries and parameters returned by the API for these results, including the last saved action.</p>
-      @for (query of queries(); track $index) { <article><h3>{{ query.label }} <small>{{ query.language }}</small></h3><pre>{{ query.command }}</pre><h4>Parameters</h4><pre>{{ query.parameters | json }}</pre></article> }
-      @empty { <p>No successful queries have been returned yet.</p> }
-    </aside>
-  }
+<footer>Live results from ArcadeDB</footer>
 </main>

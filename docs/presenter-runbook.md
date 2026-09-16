@@ -74,6 +74,12 @@ Budget 1 minute for the opening and architecture, 3 minutes for foundation and g
 
 The deck intentionally orders mutations before their dependent reads: recipe revision 3 precedes the pinned-revision proof, and the successful tasting precedes the SQL/Cypher record comparison. If slides are skipped or presented out of order, reset and resume from the start of the affected section.
 
+## Moving between results and queries
+
+Use **Inspect queries** beside the section you are explaining. It expands inline with that section's actual statements, language, parameters, and available plan; **Hide queries** closes it. The network's rematch and reconnect cards have separate **Show**/**Hide** controls for their results. Their query inspectors remain available even when the result lists are collapsed.
+
+A shared retrieval can feed several visuals. Those inspectors show the same source statement and explain any API calculation, such as shortest paths, target interpolation, or ranking. The notes inspector follows the selected subject and persona; changing either clears stale evidence. Saved community actions and transaction writes have their own inspectors beside the corresponding action or transaction steps.
+
 ## Recovery and fallback
 
 - If a page is stale or an action times out, reload its activation URL once. If readiness is no longer green, use the Aspire dashboard to inspect the exact failing resource: `arcadedb`, `local-models`, `embedding`, `api`, `web`, or `telemetry-simulator`. Restart that resource and wait for `api` and `web` again.
