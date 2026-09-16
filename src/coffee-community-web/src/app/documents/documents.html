@@ -4,6 +4,13 @@
   <label class="persona">Demo persona<select aria-label="Demo persona" [value]="persona()" (change)="changePersona($event)" [disabled]="busy()"><option value="maya-chen">Maya Chen</option><option value="priya-nair">Priya Nair</option><option value="luis-ortega">Luis Ortega</option></select></label>
   <p class="kicker">{{ mode() === 'recipes' ? 'STRUCTURED RECIPES · IMMUTABLE HISTORY' : 'BEAN TO CUP · CONNECTED PROVENANCE' }}</p>
   <h1>{{ mode() === 'recipes' ? (recipe()?.recipe?.name ?? 'Recipe workshop') : (coffee()?.batch?.name ?? 'Bean to cup') }}</h1>
+  @if (mode() === 'recipes') {
+    <app-why-one-database
+      models="DOCUMENTS · GRAPH · SEARCH · VECTORS"
+      proof="Publishing keeps the immutable recipe revision, its graph link, searchable text, and vector index update inside one database transaction."
+      alternative="document, graph, and vector stores would need an outbox or synchronization pipeline—and repair logic when one update fails."
+    />
+  }
   @if (error()) {<p class="error" role="alert">{{error()}}</p><button (click)="retry()" [disabled]="busy()">Reload page</button>}
   @if (message()) {<p class="success" role="status">{{message()}}</p>}
   @if (loading()) {<p role="status">Loading documents…</p>}

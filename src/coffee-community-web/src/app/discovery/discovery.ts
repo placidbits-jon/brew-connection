@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { form, FormField } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, combineLatest, of, startWith, Subject, switchMap, tap } from 'rxjs';
+import { WhyOneDatabase } from '../why-one-database/why-one-database';
 
 interface SearchResult {
   slug: string;
@@ -46,7 +47,7 @@ interface DiscoveryResult {
 
 @Component({
   selector: 'app-discovery',
-  imports: [RouterLink, FormField, DecimalPipe, QueryInspector],
+  imports: [RouterLink, FormField, DecimalPipe, QueryInspector, WhyOneDatabase],
   templateUrl: './discovery.html',
   styleUrl: './discovery.scss',
 })

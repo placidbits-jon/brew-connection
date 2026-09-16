@@ -21,6 +21,7 @@ import {
   QueryInspector,
   queriesByLabel,
 } from '../query-inspector/query-inspector';
+import { WhyOneDatabase } from '../why-one-database/why-one-database';
 interface RecordLink {
   slug: string;
   name: string;
@@ -91,7 +92,7 @@ interface Counter {
 }
 @Component({
   selector: 'app-telemetry',
-  imports: [RouterLink, FormField, DatePipe, DecimalPipe, QueryInspector],
+  imports: [RouterLink, FormField, DatePipe, DecimalPipe, QueryInspector, WhyOneDatabase],
   templateUrl: './telemetry.html',
   styleUrl: './telemetry.scss',
 })

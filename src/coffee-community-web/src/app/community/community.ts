@@ -64,6 +64,10 @@ export class Community {
   }
 
   protected retry(): void { this.reload.next(); }
+  protected changePersona(event: Event): void {
+    const personSlug = (event.target as HTMLSelectElement).value;
+    if (personSlug !== this.slug()) void this.router.navigate(['/demo/passport', personSlug]);
+  }
   protected findPath(event: Event): void {
     event.preventDefault();
     if ((this.route.snapshot.queryParamMap.get('target') ?? 'luis-ortega') === this.model().pathTarget) this.reload.next();

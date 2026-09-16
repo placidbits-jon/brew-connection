@@ -66,6 +66,7 @@ describe('Discovery modes', () => {
   }
   it('reconstructs query and renders keyword evidence, scores and actual query metadata', async () => {
     const h = await load();
+    expect(h.routeNativeElement!.textContent).not.toContain('Why one database?');
     expect(h.routeNativeElement!.textContent).toContain('Ethiopia Blueberry Bloom');
     expect(h.routeNativeElement!.textContent).toContain('BM25 keyword match');
     button(h, 'Inspect queries').click();
@@ -129,6 +130,8 @@ describe('Discovery modes', () => {
     expect(request.request.params.get('query')).toBe('bright floral');
     request.flush({ ...result, query: 'bright floral', mode: 'personalized' });
     await h.fixture.whenStable();
+    expect(h.routeNativeElement!.textContent).toContain('Why one database?');
+    expect(h.routeNativeElement!.textContent).toContain('copied social and inventory signals');
     expect(h.routeNativeElement!.textContent).toContain(
       'Local model search query: “bright floral”',
     );

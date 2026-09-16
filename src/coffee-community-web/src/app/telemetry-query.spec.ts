@@ -132,6 +132,8 @@ describe('Telemetry and event section query evidence', () => {
         queries: [...brewLabels.map((label) => query(label)), query('Unrelated statement')],
       });
     await h.fixture.whenStable();
+    expect(h.routeNativeElement!.textContent).toContain('Why one database?');
+    expect(h.routeNativeElement!.textContent).toContain('without copying the target');
     const expected: Record<string, string[]> = {
       'Brew context': brewLabels.slice(0, 6),
       'Water weight': [

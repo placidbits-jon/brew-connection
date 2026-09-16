@@ -30,7 +30,7 @@ status, catalog = request('/api/demo/lab')
 assert status == 200, ('catalog endpoint', status, catalog)
 ids = [example['id'] for example in catalog['examples']]
 assert len(ids) == len(set(ids))
-assert {'sql-brew', 'cypher-brew', 'redis-counter', 'fulltext-coffee', 'vector-coffee', 'timeseries-brew', 'geo-vendors', 'compatibility-summary'} <= set(ids)
+assert {'sql-brew', 'cypher-brew', 'redis-counter', 'fulltext-coffee', 'vector-coffee', 'personalized-cross-model', 'timeseries-brew', 'geo-vendors', 'compatibility-summary'} <= set(ids)
 before_status, before = request('/api/demo/schema')
 assert before_status == 200
 before_counts = {item['name']: item['records'] for item in before['types']}
@@ -48,6 +48,10 @@ for identifier, result in results.items():
 assert results['sql-brew']['records'][0]['rid'] == results['cypher-brew']['records'][0]['rid']
 assert results['sql-transaction-brew']['records'] == results['cypher-transaction-brew']['records'], 'Transaction SQL/Cypher identity differs'
 assert len(results['vector-coffee']['parameters']['embedding']) == 768
+assert len(results['personalized-cross-model']['parameters']['embedding']) == 768
+assert results['personalized-cross-model']['records'][0]['slug'] == 'roast-batch-0003'
+cross_model_plan = results['personalized-cross-model']['plan']['text']
+assert 'SEARCH_INDEX' in cross_model_plan and 'Person[slug]' in cross_model_plan and 'vector.neighbors' in cross_model_plan
 assert len(results['compatibility-summary']['checks']) == 7
 for payload in [
     {'id': 'missing'}, {'id': "sql-brew; DELETE FROM Brew"},

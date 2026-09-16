@@ -11,6 +11,29 @@ public sealed class CommunityQueryLab(ArcadeDbClient db, EmbeddingClient embeddi
 {
     private const string SqlBrew = "SELECT @rid AS rid, slug, name, method FROM Brew WHERE slug=:slug LIMIT 1";
     private const string CypherBrew = "MATCH (b:Brew {slug:$slug}) RETURN elementId(b) AS rid, b.slug AS slug, b.name AS name, b.method AS method LIMIT 1";
+    private const string PersonalizedCrossModel = """
+        SELECT record.subjectSlug AS slug, record.subject.name AS name, min(distance) AS vectorDistance
+        FROM (SELECT expand(vector.neighbors('SearchEmbedding[embedding]', :embedding, :k)))
+        WHERE record.subjectType = 'RoastBatch'
+          AND record.subjectSlug IN (
+            SELECT slug FROM RoastBatch
+            WHERE SEARCH_INDEX('RoastBatch[searchText]', :expression)=true
+          )
+          AND record.subjectSlug IN (
+            SELECT slug FROM (
+              MATCH
+                {type: Person, as: person, where: (slug = :persona)}
+                .both('MET'){type: Person, as: friend}
+                .out('LOVED'){type: Brew, as: brew}
+                .out('USED_BATCH'){type: RoastBatch, as: roast}
+                .in('SELLS'){type: VendorTable, as: vendor, where: (available = true)}
+              RETURN roast.slug AS slug
+            )
+          )
+        GROUP BY record.subjectSlug, record.subject.name
+        ORDER BY vectorDistance, slug
+        LIMIT 10
+        """;
     private static readonly string[] Limitations = [
         "These are bounded, curated reads of the running database; they do not establish support for arbitrary queries or every feature of a language.",
         "The compatibility summary does not execute transaction writes, rollback, isolation, durability, retention, or Redis mutation checks. Use the transaction demo and dedicated verification scripts for those checks.",
@@ -26,6 +49,7 @@ public sealed class CommunityQueryLab(ArcadeDbClient db, EmbeddingClient embeddi
         new("redis-counter", "Transient counter: GET only", "redis", "GET " + ArcadeRedisClient.CounterKey, null, "not-applicable", "Read the counter through ArcadeDB's actual HTTP Redis executor; never increment it."),
         new("fulltext-coffee", "Native Lucene full-text search", "sql", "SELECT slug, name, $score AS score FROM RoastBatch WHERE SEARCH_INDEX('RoastBatch[searchText]', :expression)=true ORDER BY $score DESC, slug LIMIT 10", new { expression = "blueberry" }, "available", "Lucene returns coffee documents and scores for a fixed public-text search."),
         new("vector-coffee", "Native 768-dimensional vector neighbors", "sql", "SELECT record.subjectSlug AS slug, record.subjectType AS type, distance FROM (SELECT expand(vector.neighbors('SearchEmbedding[embedding]', :embedding, :k))) LIMIT 10", new { text = "fruity blueberry floral coffee", purpose = "query", dimensions = 768, k = 10 }, "available", "Generate a local query embedding, then pass its actual 768 values to the native COSINE vector index. Scale aliases may appear."),
+        new("personalized-cross-model", "One-query personalized coffee", "sql", PersonalizedCrossModel, new { text = "stonefruit honey tea-like washed coffee", expression = "stonefruit honey", persona = "maya-chen", purpose = "query", dimensions = 768, k = 25000 }, "available", "One fixed SQL statement intersects native vector neighbors, Lucene matches, Maya's live acquaintance path, and vendor availability. This proves cross-model composition; it does not replace the discovery scorer's union and weighted ranking."),
         new("timeseries-brew", "Native time-series samples", "sql", "SELECT ts, water_grams, flow_rate, temperature_c FROM BrewTelemetry WHERE ts BETWEEN :from AND :to AND brew_id=:slug AND device=:device ORDER BY ts LIMIT 10", new { from = 1789401600000L, to = 1789401659999L, slug = "blueberry-bloom-v60", device = "scale-0" }, "available", "Read ten authored samples using native time-series tags and a fixed timestamp range."),
         new("geo-vendors", "Native geospatial containment and distance", "sql", "SELECT slug, name, geo.distance(coords, geo.geomFromText(:point), 'm') AS distanceMeters FROM VendorTable WHERE geo.within(coords, geo.geomFromText(:boundary))=true AND geo.distance(coords, geo.geomFromText(:point), 'm') <= :radius ORDER BY distanceMeters, slug LIMIT 10", new { point = "POINT(-83.0458 42.3314)", boundary = "POLYGON((-83.047 42.330,-83.044 42.330,-83.044 42.333,-83.047 42.333,-83.047 42.330))", radius = 100 }, "available", "Use native spatial functions and the geospatial index to find tables within the seeded convention boundary."),
         new("compatibility-summary", "Run read-only compatibility summary", "summary", "Run the seven fixed seeded read examples", null, "not-applicable", "Report actual runtime read results and explicit limitations. No transaction or other write tests run.")
@@ -43,7 +67,7 @@ public sealed class CommunityQueryLab(ArcadeDbClient db, EmbeddingClient embeddi
             if (id != "compatibility-summary") return await Execute(example, ct);
             var watch = Stopwatch.StartNew();
             var checks = new List<LabResult>();
-            foreach (var item in Examples.Where(x => x.Id != "compatibility-summary" && !x.Id.Contains("transaction-brew", StringComparison.Ordinal)))
+            foreach (var item in Examples.Where(x => x.Id != "compatibility-summary" && x.Id != "personalized-cross-model" && !x.Id.Contains("transaction-brew", StringComparison.Ordinal)))
                 checks.Add(await Execute(item, ct));
             var records = checks.Select(x => JsonSerializer.SerializeToElement(new { id = x.Id, status = "read-completed", recordCount = x.RecordCount, executionMs = x.ExecutionMs })).ToArray();
             return new(example.Id, example.Label, example.Language, example.Command, null, records, records.Length, watch.Elapsed.TotalMilliseconds, new("not-applicable", null, "Inspect each read's plan below."), null, checks.ToArray(), Limitations);
@@ -55,11 +79,14 @@ public sealed class CommunityQueryLab(ArcadeDbClient db, EmbeddingClient embeddi
     {
         object? parameters = example.Parameters;
         // No caller-controlled language, command, embedding, or parameter is accepted.
-        if (example.Id == "vector-coffee")
+        if (example.Id is "vector-coffee" or "personalized-cross-model")
         {
-            var embedding = await embeddings.EmbedAsync("fruity blueberry floral coffee", ct, "query");
+            var text = example.Id == "vector-coffee" ? "fruity blueberry floral coffee" : "stonefruit honey tea-like washed coffee";
+            var embedding = await embeddings.EmbedAsync(text, ct, "query");
             if (embedding.Length != 768 || embedding.Any(x => !float.IsFinite(x))) throw new GraphRequestException(503, "The local embedding service returned an invalid vector.");
-            parameters = new { embedding, k = 10 };
+            parameters = example.Id == "vector-coffee"
+                ? new { embedding, k = 10 }
+                : new { embedding, k = 25000, expression = "stonefruit honey", persona = "maya-chen" };
         }
         var watch = Stopwatch.StartNew();
         using var result = example.Language == "redis"

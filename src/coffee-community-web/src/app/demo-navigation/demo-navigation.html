@@ -1,0 +1,17 @@
+<nav class="demo-nav" aria-label="Demo pages">
+  <a class="demo-nav__brand" routerLink="/demo/story" aria-label="Brew Connection home">
+    <span aria-hidden="true">B/C</span>
+    <strong>Brew Connection</strong>
+  </a>
+
+  <div class="demo-nav__links">
+    @for (destination of destinations; track destination.route) {
+      <a
+        [routerLink]="destination.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >{{ destination.label }}</a>
+    }
+  </div>
+</nav>

@@ -42,6 +42,21 @@ const catalog = {
       description: 'Read through the graph.',
       planStatus: 'unavailable',
     },
+    {
+      id: 'personalized-cross-model',
+      label: 'One-query personalized coffee',
+      language: 'sql',
+      command: 'SELECT FROM vector.neighbors(...) WHERE slug IN (SEARCH_INDEX and MATCH)',
+      parameters: {
+        text: 'stonefruit honey tea-like washed coffee',
+        expression: 'stonefruit honey',
+        persona: 'maya-chen',
+        dimensions: 768,
+        k: 25000,
+      },
+      description: 'Combine vector, full-text, graph and availability in one statement.',
+      planStatus: 'available',
+    },
   ],
   limitations: [],
 };
@@ -77,6 +92,8 @@ describe('Transactions and curated query lab', () => {
     const h = await RouterTestingHarness.create('/demo/transactions?scenario=rollback');
     http.expectOne('/api/demo/transactions').flush(transaction);
     await h.fixture.whenStable();
+    expect(h.routeNativeElement!.textContent).toContain('Why one database?');
+    expect(h.routeNativeElement!.textContent).toContain('distributed transactions');
     button(h, 'Trigger halfway failure').click();
     const req = http.expectOne('/api/demo/transactions/run');
     expect(req.request.body).toEqual({ scenario: 'rollback' });
@@ -103,6 +120,32 @@ describe('Transactions and curated query lab', () => {
     expect(h.routeNativeElement!.textContent).toContain('Blueberry Bloom V60');
     expect(h.routeNativeElement!.textContent).toContain('FETCH FROM INDEX');
     expect(h.routeNativeElement!.querySelector('textarea')).toBeNull();
+  });
+  it('runs the fixed personalized cross-model query from a deep link', async () => {
+    const h = await RouterTestingHarness.create('/demo/lab?example=personalized-cross-model');
+    http.expectOne('/api/demo/lab').flush(catalog);
+    await h.fixture.whenStable();
+    expect(h.routeNativeElement!.textContent).toContain('One-query personalized coffee');
+    expect(h.routeNativeElement!.textContent).toContain('stonefruit honey');
+    button(h, 'Run query').click();
+    const req = http.expectOne('/api/demo/lab/run');
+    expect(req.request.body).toEqual({ id: 'personalized-cross-model' });
+    req.flush({
+      ...catalog.examples[2],
+      records: [
+        {
+          slug: 'roast-batch-0003',
+          name: "Priya's Honey Stonefruit",
+          vectorDistance: 0.34776974,
+        },
+      ],
+      recordCount: 1,
+      executionMs: 13.5,
+      plan: { status: 'available', text: 'SEARCH_INDEX · Person[slug] · vector.neighbors' },
+    });
+    await h.fixture.whenStable();
+    expect(h.routeNativeElement!.textContent).toContain("Priya's Honey Stonefruit");
+    expect(h.routeNativeElement!.textContent).toContain('vector.neighbors');
   });
   it('does not display an old query response after choosing another example', async () => {
     const h = await RouterTestingHarness.create('/demo/lab?example=sql-brew');

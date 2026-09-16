@@ -5,6 +5,7 @@ import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, combineLatest, of, startWith, Subject, switchMap, tap } from 'rxjs';
+import { WhyOneDatabase } from '../why-one-database/why-one-database';
 interface Snapshot {
   counts: Record<string, number>;
   brew: unknown[];
@@ -25,7 +26,7 @@ interface Receipt {
 }
 @Component({
   selector: 'app-transactions',
-  imports: [RouterLink, JsonPipe, QueryInspector],
+  imports: [RouterLink, JsonPipe, QueryInspector, WhyOneDatabase],
   templateUrl: './transactions.html',
   styleUrl: './transactions.scss',
 })

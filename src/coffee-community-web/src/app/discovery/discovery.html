@@ -44,6 +44,13 @@
       }
     </div>
   </form>
+  @if (mode() === 'personalized') {
+    <app-why-one-database
+      models="FULL-TEXT · VECTORS · GRAPH · AVAILABILITY"
+      proof="The candidates, semantic matches, community relationships, and current vendor offers come from one consistent dataset, so every recommendation can show its evidence."
+      alternative="a search service would usually need copied social and inventory signals kept current through CDC, queues, or application reconciliation."
+    />
+  }
   <details class="helper">
     <summary>Describe your next cup in your own words</summary>
     <p>

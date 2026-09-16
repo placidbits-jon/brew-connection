@@ -13,11 +13,14 @@ Open `/demo/lab` to select and execute fixed, read-only examples against the cur
 | `redis-counter` | Transient counter with GET through ArcadeDB's HTTP Redis executor |
 | `fulltext-coffee` | Native Lucene search for blueberry, at most ten coffees |
 | `vector-coffee` | Ten native COSINE neighbors using a local 768-dimensional query embedding |
+| `personalized-cross-model` | One SQL statement combining vector neighbors, Lucene matches, Maya's graph path, and available vendor offers |
 | `timeseries-brew` | Ten native time-series samples from the authored Brew |
 | `geo-vendors` | At most ten tables within the fixed venue polygon and 100-meter radius |
-| `compatibility-summary` | The seven seeded reads above, excluding optional transaction reads |
+| `compatibility-summary` | The seven baseline seeded reads, excluding optional transaction reads and the cross-model spike |
 
 Each run returns the actual language, command, parameters, records, record count, database round-trip execution time in milliseconds and plan status. SQL plans come from a separate native `EXPLAIN` request. Execution time excludes query embedding generation and the separate EXPLAIN request. Summary execution time includes all its child reads and their preparation/plans. Vector results include the actual 768-value parameter, not a placeholder; scale aliases may appear among neighbors. Cypher plans are explicitly not available in this lab. Redis GET has no SQL query plan.
+
+`personalized-cross-model` is a fixed composition proof rather than a replacement for the discovery ranking pipeline. After the local service generates one query embedding, a single parameterized ArcadeDB SQL statement intersects the vector neighborhood with Lucene matches and coffees reachable through Maya's `MET → LOVED → USED_BATCH` path that an available vendor `SELLS`. It should return `roast-batch-0003` in the story profile. The production personalized mode intentionally unions candidates and exposes its weighted keyword, vector and graph contributions; this lab example only proves that all four access patterns can participate in one indexed statement.
 
 The transaction examples return an explicit empty-state message until the successful transaction demo commits `transaction-blueberry-v60`. Resetting the story removes that record. Both examples resolve it independently through their respective query languages.
 
@@ -29,4 +32,4 @@ Run against a ready seeded API:
 python3 scripts/verify-query-lab.py http://localhost:5130
 ```
 
-The script runs every catalog entry, compares SQL/Cypher RIDs, checks actual SQL plans and vector dimensions, rejects injection/override payloads and verifies the counter and all schema record counts are unchanged. It performs no reset or write. Run it without concurrent demo mutations or reset actions.
+The script runs every catalog entry, compares SQL/Cypher RIDs, checks the cross-model result and plan, validates vector dimensions, rejects injection/override payloads and verifies the counter and all schema record counts are unchanged. It performs no reset or write. Run it without concurrent demo mutations or reset actions.

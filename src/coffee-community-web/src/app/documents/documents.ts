@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { form, FormField, required, min, applyEach } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Subject, startWith, switchMap, tap, catchError, of, takeUntil } from 'rxjs';
+import { WhyOneDatabase } from '../why-one-database/why-one-database';
 
 interface RecordData { slug: string; name?: string; [key: string]: unknown }
 interface Revision extends RecordData { revision: number; steps: {atSeconds: number; waterGrams: number; action: string}[]; equipment: {brewer: string; filter: string; grinder: string}; grind: {clicks: number}; temperatureC: number; coffeeGrams: number; waterGrams: number; commentary: string }
@@ -17,7 +18,7 @@ interface GraphNode { id: string; label: string; kind: string; record: unknown; 
 interface GraphEdge { from: GraphNode; to: GraphNode; label: string }
 const defaults = () => ({steps: [{atSeconds: 0, waterGrams: 60, action: 'Bloom'}, {atSeconds: 45, waterGrams: 180, action: 'Slow spiral pour'}, {atSeconds: 90, waterGrams: 300, action: 'Finish pour'}], equipment: {brewer: 'V60', filter: 'paper', grinder: 'hand grinder'}, grind: {clicks: 20}, temperatureC: 93, coffeeGrams: 20, waterGrams: 300, commentary: 'A sweeter finish'});
 
-@Component({selector: 'app-documents', imports: [RouterLink, JsonPipe, FormField, QueryInspector], templateUrl: './documents.html', styleUrl: './documents.scss'})
+@Component({selector: 'app-documents', imports: [RouterLink, JsonPipe, FormField, QueryInspector, WhyOneDatabase], templateUrl: './documents.html', styleUrl: './documents.scss'})
 export class Documents {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);

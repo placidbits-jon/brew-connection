@@ -36,6 +36,33 @@ describe('Community graph routes', () => {
     expect(drawer.textContent).toContain('maya-chen');
   });
 
+  it('switches between the three authored passport personas', async () => {
+    const harness = await loadPassport();
+    const selector = harness.routeNativeElement!.querySelector<HTMLSelectElement>(
+      'select[aria-label="Explore passport as"]',
+    )!;
+    expect(Array.from(selector.options).map(option => option.value)).toEqual([
+      'maya-chen',
+      'priya-nair',
+      'luis-ortega',
+    ]);
+
+    selector.value = 'priya-nair';
+    selector.dispatchEvent(new Event('change'));
+    await harness.fixture.whenStable();
+    http.expectOne('/api/demo/passport/priya-nair').flush({
+      person: {slug: 'priya-nair', name: 'Priya Nair'},
+      timeline: [],
+      queries: [],
+    });
+    await harness.fixture.whenStable();
+
+    expect(harness.routeNativeElement!.textContent).toContain('Priya Nair’s coffee passport');
+    expect(harness.routeNativeElement!.querySelector<HTMLSelectElement>(
+      'select[aria-label="Explore passport as"]',
+    )!.value).toBe('priya-nair');
+  });
+
   it('records the badge fields once, refreshes the timeline and retains mutation queries', async () => {
     const harness = await loadPassport('meet');
     harness.routeNativeElement!.querySelector('form')!.dispatchEvent(new Event('submit', {cancelable:true}));

@@ -136,7 +136,7 @@
               <h3>Statement</h3>
               <pre>{{ query.command }}</pre>
               <h3>
-                {{ query.id === 'vector-coffee' ? 'Embedding input settings' : 'Fixed parameters' }}
+                {{ query.id === 'vector-coffee' || query.id === 'personalized-cross-model' ? 'Embedding input settings' : 'Fixed parameters' }}
               </h3>
               <pre>{{ query.parameters | json }}</pre>
             </article>

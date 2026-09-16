@@ -44,6 +44,11 @@
         }}
       </button>
     </section>
+    <app-why-one-database
+      models="TIME-SERIES · GRAPH · DOCUMENTS"
+      proof="Native measurements are compared with the immutable recipe revision reached through this brew’s graph relationship, without copying the target into a telemetry store."
+      alternative="a time-series service and graph or document database would need shared identifiers, coordinated retention, and synchronization when recipe links change."
+    />
     <p>
       Run: {{ data.runId }} · {{ data.status }} ·
       {{ data.sampleCount ?? data.samples.length }} samples.
