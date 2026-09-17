@@ -66,7 +66,7 @@ created = call('recipes/integration-recipe')
 assert len(created['revisions']) == 2 and created['currentRevision']['revision'] == 2
 assert created['revisions'][0] == new['revisions'][0]
 
-for kind, slug in [('Person', 'priya-nair'), ('Brew', 'blueberry-bloom-v60'), ('RoastBatch', 'ethiopia-blueberry-bloom'), ('Recipe', 'blueberry-v60'), ('GameSession', 'maya-luis-rematch')]:
+for kind, slug in [('Person', 'priya-nair'), ('Brew', 'blueberry-bloom-v60'), ('RoastBatch', 'ethiopia-blueberry-bloom'), ('Recipe', 'blueberry-v60'), ('GameSession', 'maya-luis-magic')]:
     for visibility in ['private', 'public']:
         call('notes', {'slug': f'integration-{kind}-{visibility}', 'personSlug': 'maya-chen', 'subjectType': kind, 'subjectSlug': slug, 'visibility': visibility, 'body': f'Integration {visibility} secret for {kind}: <b>plain text</b>'})
     path = f'notes?subjectType={kind}&subjectSlug={slug}&persona='

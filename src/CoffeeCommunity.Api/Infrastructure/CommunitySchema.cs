@@ -4,7 +4,7 @@ namespace CoffeeCommunity.Api.Infrastructure;
 
 public static class CommunitySchema
 {
-    public const string Version = "002-community";
+    public const string Version = "004-game-drinks";
     public static readonly string[] Vertices = ["Person", "Organization", "Event", "VenueArea", "VendorTable", "CoffeeLot", "RoastBatch", "Recipe", "Brew", "Game", "GameSession"];
     public static readonly string[] Edges = ["ATTENDED", "MET", "WANTS_TO_RECONNECT", "MEMBER_OF", "ROASTED", "SELLS", "FROM_LOT", "BREWED", "USED_BATCH", "USED_RECIPE", "TASTED", "LOVED", "LIKED_RECIPE", "PLAYED_IN", "BEAT_IN_GAME"];
     public static string Build()
@@ -41,8 +41,15 @@ public static class CommunitySchema
         foreach (var (type, name) in new[] { ("Recipe", "currentRevision"), ("RecipeRevision", "author"), ("RecipeRevision", "recipe"), ("Note", "owner"), ("Note", "subject"), ("RoastProfile", "roastBatch"), ("BadgeLookup", "target"), ("SearchEmbedding", "subject") })
             Property(type, name, "LINK");
         Property("USED_RECIPE", "revision", "LINK");
+        Property("PLAYED_IN", "drink", "LINK");
+        Property("PLAYED_IN", "drinkNote", "STRING");
         Property("GameSession", "game", "LINK");
         Property("GameSession", "area", "LINK");
+        Property("GameSession", "playedAt", "DATETIME");
+        Property("Game", "category", "STRING");
+        Property("Game", "mechanics", "LIST");
+        Property("Game", "playerRange", "STRING");
+        Property("Game", "playMinutes", "INTEGER");
         Property("RecipeRevision", "steps", "LIST");
         Property("RecipeRevision", "revision", "INTEGER");
         Property("Note", "visibility", "STRING");

@@ -131,8 +131,8 @@ public sealed class CommunityGraph(ArcadeDbClient db, CommunityGraphGate gate, D
         }
         else
         {
-            await Query("Create game session", "INSERT INTO GameSession SET slug=:slug, name=:name, gameSlug=:gameSlug, game=(SELECT FROM Game WHERE slug=:gameSlug)",
-                new { slug = request.Slug, name = $"{Str(game, "name")}: {Str(person, "name")} versus {Str(opponent, "name")}", gameSlug = request.GameSlug }, ct);
+            await Query("Create game session", "INSERT INTO GameSession SET slug=:slug, name=:name, gameSlug=:gameSlug, playedAt=:playedAt, game=(SELECT FROM Game WHERE slug=:gameSlug), area=(SELECT FROM VenueArea WHERE slug='area-1')",
+                new { slug = request.Slug, name = $"{Str(game, "name")}: {Str(person, "name")} versus {Str(opponent, "name")}", gameSlug = request.GameSlug, playedAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) }, ct);
             await Edge("PLAYED_IN", request.PersonSlug, "GameSession", request.Slug, "Joined a game", "Game table", ct);
             await Edge("PLAYED_IN", request.OpponentSlug, "GameSession", request.Slug, "Joined a game", "Game table", ct);
         }

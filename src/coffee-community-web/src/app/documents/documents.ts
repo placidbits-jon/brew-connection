@@ -15,7 +15,8 @@ type Query = InspectedQuery;
 interface RecipeDetail { recipe: RecordData; currentRevision: Revision; revisions: Revision[]; notes: Note[]; queries: Query[] }
 interface CoffeeDetail { batch: RecordData; lot: RecordData; roaster: RecordData; vendor: RecordData; roastProfile: RecordData; brews: {brew: RecordData; brewer: RecordData; recipe: RecordData; revision: Revision; reactions: {person: RecordData; kind: string; reaction: RecordData}[]}[]; notes: Note[]; queries: Query[] }
 interface GraphNode { id: string; label: string; kind: string; record: unknown; x: number; y: number }
-interface GraphEdge { from: GraphNode; to: GraphNode; label: string }
+interface GraphEdge { from: GraphNode; to: GraphNode; label: string; x1: number; y1: number; x2: number; y2: number }
+const graphNodeHalfWidth = 80, graphNodeHalfHeight = 36, graphEdgeGap = 8;
 const defaults = () => ({steps: [{atSeconds: 0, waterGrams: 60, action: 'Bloom'}, {atSeconds: 45, waterGrams: 180, action: 'Slow spiral pour'}, {atSeconds: 90, waterGrams: 300, action: 'Finish pour'}], equipment: {brewer: 'V60', filter: 'paper', grinder: 'hand grinder'}, grind: {clicks: 20}, temperatureC: 93, coffeeGrams: 20, waterGrams: 300, commentary: 'A sweeter finish'});
 
 @Component({selector: 'app-documents', imports: [RouterLink, JsonPipe, FormField, QueryInspector, WhyOneDatabase], templateUrl: './documents.html', styleUrl: './documents.scss'})
@@ -36,6 +37,7 @@ export class Documents {
   protected readonly error = signal('');
   protected readonly message = signal('');
   protected readonly creating = signal(false);
+  protected readonly memoryOpen = signal(false);
   protected readonly selectedNode = signal<GraphNode | null>(null);
   protected readonly comparison = signal('');
   protected readonly previous = computed(() => this.recipe()?.revisions.find(r => r.slug === this.comparison()));
@@ -43,7 +45,7 @@ export class Documents {
   protected readonly historyQueries = computed(() => queriesByLabel(this.recipe()?.queries, 'Immutable recipe history', 'Current revision link'));
   protected readonly provenanceQueries = computed(() => {
     const entry = this.coffee()?.brews.find(b => b.brew.slug === this.selectedBrew());
-    return queriesByLabel(this.coffee()?.queries, 'Resolve RoastBatch', 'Follow FROM_LOT', 'Follow ROASTED', 'Follow SELLS', 'Nested roast profile document', 'Brews using this batch', 'Follow BREWED', 'Follow USED_RECIPE', 'Historical revision pinned on USED_RECIPE', 'Attendee TASTED reactions', 'Attendee LOVED reactions', 'Resolve Person').filter(query => {
+    return queriesByLabel(this.coffee()?.queries, 'Single Cypher provenance graph', 'Nested roast profile document', 'Historical revisions pinned on USED_RECIPE', 'Resolve RoastBatch', 'Follow FROM_LOT', 'Follow ROASTED', 'Follow SELLS', 'Brews using this batch', 'Follow BREWED', 'Follow USED_RECIPE', 'Historical revision pinned on USED_RECIPE', 'Attendee TASTED reactions', 'Attendee LOVED reactions', 'Resolve Person').filter(query => {
       const slug = (query.parameters as {slug?: string})?.slug;
       if (query.label === 'Resolve Person') return entry?.reactions.some(r => r.person.slug === slug);
       const brewLabels = ['Follow BREWED', 'Follow USED_RECIPE', 'Historical revision pinned on USED_RECIPE', 'Attendee TASTED reactions', 'Attendee LOVED reactions'];
@@ -54,10 +56,10 @@ export class Documents {
     const node = this.selectedNode();
     if (!node) return [];
     const labels: Record<string, string[]> = {
-      batch: ['Resolve RoastBatch'], lot: ['Follow FROM_LOT'], roaster: ['Follow ROASTED'], vendor: ['Follow SELLS'],
-      profile: ['Nested roast profile document'], brew: ['Brews using this batch'], brewer: ['Follow BREWED'],
-      recipe: ['Follow USED_RECIPE'], revision: ['Historical revision pinned on USED_RECIPE'],
-      reaction: ['Resolve Person', `Attendee ${node.kind.split(' · ')[0]} reactions`],
+      batch: ['Single Cypher provenance graph', 'Resolve RoastBatch'], lot: ['Single Cypher provenance graph', 'Follow FROM_LOT'], roaster: ['Single Cypher provenance graph', 'Follow ROASTED'], vendor: ['Single Cypher provenance graph', 'Follow SELLS'],
+      profile: ['Nested roast profile document'], brew: ['Single Cypher provenance graph', 'Brews using this batch'], brewer: ['Single Cypher provenance graph', 'Follow BREWED'],
+      recipe: ['Single Cypher provenance graph', 'Follow USED_RECIPE'], revision: ['Historical revisions pinned on USED_RECIPE', 'Historical revision pinned on USED_RECIPE'],
+      reaction: ['Single Cypher provenance graph', 'Resolve Person', `Attendee ${node.kind.split(' · ')[0]} reactions`],
     };
     return queriesByLabel(this.provenanceQueries(), ...(labels[node.id.split('-')[0]] ?? [])).filter(query => query.label !== 'Resolve Person' || (query.parameters as {slug?: string})?.slug === (node.record as RecordData).slug);
   });
@@ -76,7 +78,13 @@ export class Documents {
     const data = this.coffee(); const nodes: GraphNode[] = []; const edges: GraphEdge[] = [];
     if (!data) return {nodes, edges, height: 500};
     const add = (id: string, kind: string, record: RecordData, x: number, y: number) => {const node = {id, kind, record, label: record?.name ?? record?.slug ?? kind, x, y}; nodes.push(node); return node;};
-    const link = (from: GraphNode, to: GraphNode, label: string) => edges.push({from, to, label});
+    const link = (from: GraphNode, to: GraphNode, label: string) => {
+      const dx = to.x - from.x, dy = to.y - from.y, distance = Math.hypot(dx, dy);
+      if (distance === 0) { edges.push({from, to, label, x1: from.x, y1: from.y, x2: to.x, y2: to.y}); return; }
+      const boundaryScale = Math.min(graphNodeHalfWidth / Math.abs(dx), graphNodeHalfHeight / Math.abs(dy));
+      const insetScale = Math.min(.5, boundaryScale + graphEdgeGap / distance);
+      edges.push({from, to, label, x1: from.x + dx * insetScale, y1: from.y + dy * insetScale, x2: to.x - dx * insetScale, y2: to.y - dy * insetScale});
+    };
     const lot = add('lot', 'Coffee lot', data.lot, 110, 60), batch = add('batch', 'Roast batch', data.batch, 430, 160);
     link(batch, lot, 'FROM_LOT'); link(add('roaster', 'Roaster', data.roaster, 430, 60), batch, 'ROASTED'); link(add('vendor', 'Vendor', data.vendor, 750, 60), batch, 'SELLS');
     link(batch, add('profile', 'RoastProfile document', data.roastProfile, 750, 160), 'profile');

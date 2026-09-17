@@ -17,11 +17,15 @@ describe('Documents section query inspectors', () => {
   const region = (h: RouterTestingHarness, title: string) => h.routeNativeElement!.querySelector(`[role="region"][aria-label="${title} queries"]`)!.textContent!;
   const field = (h: RouterTestingHarness, label: string) => Array.from(h.routeNativeElement!.querySelectorAll('label')).find(l => l.firstChild?.textContent?.trim() === label)!.querySelector('input,select') as HTMLInputElement;
   const set = (element: HTMLInputElement, value: string) => {element.value = value; element.dispatchEvent(new Event('input')); element.dispatchEvent(new Event('change'));};
+  const openMemory = (h: RouterTestingHarness) => h.routeNativeElement!.querySelector<HTMLButtonElement>('button[aria-controls="memory-panel"]')!.click();
   const loadNotes = (h: RouterTestingHarness) => Array.from(h.routeNativeElement!.querySelectorAll('button')).find(b => b.textContent?.trim() === 'Load subject notes')!.click();
   async function load() {const h = await RouterTestingHarness.create('/demo/recipes/blueberry-v60'); http.expectOne('/api/demo/recipes/blueberry-v60?persona=maya-chen').flush(recipe); await h.fixture.whenStable(); return h;}
 
   it('separates editor, history and notes retrieval evidence from writes', async () => {
     const h = await load();
+    expect(h.routeNativeElement!.querySelector('#memory-panel')).toBeNull();
+    openMemory(h); await h.fixture.whenStable();
+    expect(h.routeNativeElement!.querySelector('button[aria-controls="memory-panel"]')!.getAttribute('aria-expanded')).toBe('true');
     for (const title of ['Recipe', 'Revision history', 'Community memory']) button(h, `Inspect ${title} queries`).click();
     await h.fixture.whenStable();
     expect(region(h, 'Recipe')).toContain('Recipe vertex and current document link');
@@ -36,7 +40,7 @@ describe('Documents section query inspectors', () => {
   });
 
   it('clears stale evidence on subject edits and retains new GET response parameters', async () => {
-    const h = await load(); button(h, 'Inspect Community memory queries').click(); await h.fixture.whenStable();
+    const h = await load(); openMemory(h); await h.fixture.whenStable(); button(h, 'Inspect Community memory queries').click(); await h.fixture.whenStable();
     set(field(h, 'About'), 'Brew'); set(field(h, 'Subject slug'), 'new-cup'); await h.fixture.whenStable();
     expect(region(h, 'Community memory')).not.toContain('blueberry-v60');
     loadNotes(h);
@@ -56,7 +60,7 @@ describe('Documents section query inspectors', () => {
   });
 
   it('cancels old persona notes and shows evidence for the selected persona', async () => {
-    const h = await load(); set(field(h, 'About'), 'Brew'); set(field(h, 'Subject slug'), 'new-cup'); loadNotes(h);
+    const h = await load(); openMemory(h); await h.fixture.whenStable(); set(field(h, 'About'), 'Brew'); set(field(h, 'Subject slug'), 'new-cup'); loadNotes(h);
     const stale = http.expectOne('/api/demo/notes?persona=maya-chen&subjectType=Brew&subjectSlug=new-cup');
     await h.navigateByUrl('/demo/recipes/blueberry-v60?persona=priya-nair'); expect(stale.cancelled).toBe(true);
     http.expectOne('/api/demo/recipes/blueberry-v60?persona=priya-nair').flush(recipe);
@@ -66,26 +70,26 @@ describe('Documents section query inspectors', () => {
     expect(region(h, 'Community memory')).not.toContain('maya-chen');
   });
 
-  it('scopes provenance queries to the selected brew and selected document', async () => {
+  it('shows one Cypher read for the provenance graph and the relevant document read', async () => {
     const h = await RouterTestingHarness.create('/demo/coffee/batch');
     const brew = (slug: string) => ({brew: {slug}, brewer: {slug: 'brewer'}, recipe: recipe.recipe, revision, reactions: []});
     http.expectOne('/api/demo/coffee/batch?persona=maya-chen').flush({
       batch: {slug: 'batch'}, lot: {slug: 'lot'}, roaster: {slug: 'roaster'}, vendor: {slug: 'vendor'}, roastProfile: {slug: 'profile'},
       brews: [brew('first-cup'), brew('second-cup')], notes: [],
-      queries: [query('Resolve RoastBatch', 'batch'), query('Brews using this batch', 'batch'), query('Historical revision pinned on USED_RECIPE', 'first-cup'), query('Historical revision pinned on USED_RECIPE', 'second-cup'), query('Notes visible to selected demo persona', 'batch')],
+      queries: [{...query('Single Cypher provenance graph', 'batch'), language: 'cypher', command: 'MATCH (batch:RoastBatch) OPTIONAL MATCH (brew)-[:USED_BATCH]->(batch) RETURN batch, brew'}, query('Nested roast profile document', 'batch'), query('Historical revisions pinned on USED_RECIPE', 'batch'), query('Notes visible to selected demo persona', 'batch')],
     });
     await h.fixture.whenStable(); button(h, 'Inspect Provenance graph queries').click();
     Array.from(h.routeNativeElement!.querySelectorAll<HTMLButtonElement>('.graph-node')).find(node => node.textContent!.includes('Pinned revision'))!.click();
     await h.fixture.whenStable(); button(h, 'Inspect Selected document queries').click(); await h.fixture.whenStable();
-    expect(region(h, 'Provenance graph')).toContain('first-cup');
-    expect(region(h, 'Provenance graph')).not.toContain('second-cup');
+    expect(region(h, 'Provenance graph')).toContain('Single Cypher provenance graph');
+    expect(region(h, 'Provenance graph')).toContain('cypher');
+    expect(region(h, 'Provenance graph')).toContain('OPTIONAL MATCH');
     expect(region(h, 'Provenance graph')).not.toContain('Notes visible');
-    expect(region(h, 'Selected document')).toContain('Historical revision pinned on USED_RECIPE');
-    expect(region(h, 'Selected document')).not.toContain('Resolve RoastBatch');
+    expect(region(h, 'Selected document')).toContain('Historical revisions pinned on USED_RECIPE');
+    expect(region(h, 'Selected document')).not.toContain('Single Cypher provenance graph');
     set(field(h, 'Trace a brew'), 'second-cup'); await h.fixture.whenStable();
-    expect(region(h, 'Provenance graph')).toContain('second-cup');
-    expect(region(h, 'Provenance graph')).not.toContain('first-cup');
-    expect(region(h, 'Selected document')).toContain('Brews using this batch');
+    expect(region(h, 'Provenance graph')).toContain('Single Cypher provenance graph');
+    expect(region(h, 'Selected document')).toContain('Single Cypher provenance graph');
     expect(region(h, 'Selected document')).not.toContain('Historical revision');
   });
 });

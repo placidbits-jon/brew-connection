@@ -35,10 +35,10 @@ describe('App', () => {
     );
 
     expect(links.slice(1).map((link) => link.textContent?.trim())).toEqual([
-      'Home',
       'Passport',
       'Meet someone',
       'My network',
+      'Games',
       'Recipes',
       'Bean to cup',
       'Discover',

@@ -1,7 +1,7 @@
 <main>
   <header>
     <a routerLink="/demo/story">B/C · BREW CONNECTION</a
-    ><span>ONE QUESTION · FOUR WAYS TO FIND A CUP</span>
+    ><span>ONE QUESTION · FIVE WAYS TO FIND A CUP</span>
   </header>
   <p class="kicker">KEYWORDS · MEANING · COMMUNITY</p>
   <h1>Find your next cup.</h1>
@@ -21,33 +21,41 @@
       >
       <label
         >Show<select aria-label="Result type" [formField]="fields.type">
-          <option value="all">Coffees and recipes</option>
+          <option value="all" [disabled]="mode() === 'cross-model'">Coffees and recipes</option>
           <option value="RoastBatch">Coffees</option>
-          <option value="Recipe">Recipes</option>
+          <option value="Recipe" [disabled]="mode() === 'cross-model'">Recipes</option>
         </select></label
       >
       <label
         >Keyword example<select aria-label="Keyword example" [formField]="fields.syntax">
           <option value="plain">Words</option>
-          <option value="phrase">Exact phrase</option>
-          <option value="fuzzy">Fuzzy spelling</option>
-          <option value="stemming">Word stems</option>
-          <option value="autocomplete">Autocomplete</option>
-          <option value="morelike">More like this</option>
+          <option value="phrase" [disabled]="mode() === 'cross-model'">Exact phrase</option>
+          <option value="fuzzy" [disabled]="mode() === 'cross-model'">Fuzzy spelling</option>
+          <option value="stemming" [disabled]="mode() === 'cross-model'">Word stems</option>
+          <option value="autocomplete" [disabled]="mode() === 'cross-model'">Autocomplete</option>
+          <option value="morelike" [disabled]="mode() === 'cross-model'">More like this</option>
         </select></label
       >
-      <label class="check"
-        ><input type="checkbox" [formField]="fields.availableOnly" />Available only</label
-      >
+      @if (mode() === 'cross-model') {
+        <span class="required-filter">Available coffees only</span>
+      } @else {
+        <label class="check"
+          ><input type="checkbox" [formField]="fields.availableOnly" />Available only</label
+        >
+      }
       @if (model().syntax === 'morelike') {
         <label>Similar record slug<input [formField]="fields.similarTo" /></label>
       }
     </div>
   </form>
-  @if (mode() === 'personalized') {
+  @if (mode() === 'personalized' || mode() === 'cross-model') {
     <app-why-one-database
       models="FULL-TEXT · VECTORS · GRAPH · AVAILABILITY"
-      proof="The candidates, semantic matches, community relationships, and current vendor offers come from one consistent dataset, so every recommendation can show its evidence."
+      [proof]="
+        mode() === 'cross-model'
+          ? 'One parameterized SQL retrieval intersects native vector neighbors, Lucene matches, the selected persona’s live graph path, and current vendor availability.'
+          : 'The candidates, semantic matches, community relationships, and current vendor offers come from one consistent dataset, so every recommendation can show its evidence.'
+      "
       alternative="a search service would usually need copied social and inventory signals kept current through CDC, queues, or application reconciliation."
     />
   }
@@ -86,6 +94,13 @@
     }
   </nav>
   <p>{{ explanation() }}</p>
+  @if (mode() === 'cross-model') {
+    <p class="one-query-note">
+      <strong>Proof mode:</strong> every result must satisfy all four conditions. Personalized mode
+      remains the more forgiving weighted union. The local model creates the query vector before
+      this single retrieval runs.
+    </p>
+  }
   @if (error()) {
     <p role="alert" class="error">{{ error() }}</p>
   }
@@ -94,7 +109,15 @@
   }
   @if (data(); as data) {
     <div class="result-summary">
-      <app-query-inspector title="Search results" [queries]="data.queries" description="These queries retrieve the candidate set. The API combines the displayed keyword, vector, and community contributions to rank it." />
+      <app-query-inspector
+        title="Search results"
+        [queries]="data.queries"
+        [description]="
+          mode() === 'cross-model'
+            ? 'This is the complete cross-model retrieval statement. EXPLAIN verifies its full-text, vector, and graph access paths.'
+            : 'These queries retrieve the candidate set. The API combines the displayed keyword, vector, and community contributions to rank it.'
+        "
+      />
       <span>{{ data.results.length }} results for “{{ data.query }}”</span
       ><small
         >{{ data.model.model ?? data.model.provider }} · {{ data.model.dimensions }} dimensions ·
@@ -125,44 +148,63 @@
                   >
                 </h2>
               </div>
-              <strong class="total"
-                >{{ result.totalScore | number: '1.2-3' }}<small>combined score</small></strong
-              >
+              @if (mode() === 'cross-model') {
+                <strong class="matched">ALL 4 MATCHED</strong>
+              } @else {
+                <strong class="total"
+                  >{{ result.totalScore | number: '1.2-3' }}<small>combined score</small></strong
+                >
+              }
             </div>
             <p>{{ result.description }}</p>
-            <dl class="scores">
-              <div>
-                <dt>Keyword contribution</dt>
-                <dd>{{ result.keywordContribution | number: '1.2-3' }}</dd>
-              </div>
-              <div>
-                <dt>Vector contribution</dt>
-                <dd>{{ result.vectorContribution | number: '1.2-3' }}</dd>
-              </div>
-              <div>
-                <dt>Community contribution</dt>
-                <dd>{{ result.graphContribution | number: '1.2-3' }}</dd>
-              </div>
-              <div>
-                <dt>BM25 relevance</dt>
-                <dd>{{ result.keywordScore | number: '1.2-3' }}</dd>
-              </div>
-              <div>
-                <dt>Cosine distance</dt>
-                <dd>
-                  {{
-                    result.vectorDistance === null ? '—' : (result.vectorDistance | number: '1.3-4')
-                  }}
-                </dd>
-              </div>
-            </dl>
+            @if (mode() === 'cross-model') {
+              <dl class="scores">
+                <div>
+                  <dt>Ordering after intersection</dt>
+                  <dd>Cosine distance {{ result.vectorDistance | number: '1.3-4' }}</dd>
+                </div>
+              </dl>
+            } @else {
+              <dl class="scores">
+                <div>
+                  <dt>Keyword contribution</dt>
+                  <dd>{{ result.keywordContribution | number: '1.2-3' }}</dd>
+                </div>
+                <div>
+                  <dt>Vector contribution</dt>
+                  <dd>{{ result.vectorContribution | number: '1.2-3' }}</dd>
+                </div>
+                <div>
+                  <dt>Community contribution</dt>
+                  <dd>{{ result.graphContribution | number: '1.2-3' }}</dd>
+                </div>
+                <div>
+                  <dt>BM25 relevance</dt>
+                  <dd>{{ result.keywordScore | number: '1.2-3' }}</dd>
+                </div>
+                <div>
+                  <dt>Cosine distance</dt>
+                  <dd>
+                    {{
+                      result.vectorDistance === null
+                        ? '—'
+                        : (result.vectorDistance | number: '1.3-4')
+                    }}
+                  </dd>
+                </div>
+              </dl>
+            }
             <ul class="evidence">
               @for (explanation of result.explanations; track $index) {
                 <li>{{ explanation }}</li>
               }
             </ul>
             @if (result.graphContribution > 0 && evidenceQueries().length) {
-              <app-query-inspector [title]="result.name + ' community evidence'" [queries]="evidenceQueries()" description="This shared retrieval supplies community paths and vendor availability for the ranked candidates; the API selects the evidence for this result." />
+              <app-query-inspector
+                [title]="result.name + ' community evidence'"
+                [queries]="evidenceQueries()"
+                description="This shared retrieval supplies community paths and vendor availability for the ranked candidates; the API selects the evidence for this result."
+              />
             }
           </article>
         </li>

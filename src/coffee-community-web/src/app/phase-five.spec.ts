@@ -99,6 +99,53 @@ describe('Discovery modes', () => {
     expect(h.routeNativeElement!.textContent).toContain('Summer Orchard');
     expect(TestBed.inject(Router).url).toContain('mode=semantic');
   });
+  it('runs the curated cross-model proof as one retrieval query', async () => {
+    const h = await load();
+    button(h, 'One query').click();
+    await h.fixture.whenStable();
+    const request = http.expectOne(
+      (r) => r.url === '/api/demo/discover' && r.params.get('mode') === 'cross-model',
+    );
+    expect(request.request.params.get('query')).toBe('stonefruit honey');
+    expect(request.request.params.get('type')).toBe('RoastBatch');
+    expect(request.request.params.get('syntax')).toBe('plain');
+    request.flush({
+      ...result,
+      query: 'stonefruit honey',
+      mode: 'cross-model',
+      results: [
+        {
+          ...result.results[0],
+          slug: 'roast-batch-0003',
+          name: "Priya's Honey Stonefruit",
+          vectorDistance: 0.3478,
+          totalScore: 0.6522,
+          explanations: ['Lucene matched', 'Community path matched', 'Available vendor matched'],
+        },
+      ],
+      queries: [
+        {
+          label: 'One cross-model personalized retrieval',
+          language: 'sql',
+          command: 'SELECT ... vector.neighbors ... SEARCH_INDEX ... MATCH',
+          parameters: { expression: 'stonefruit honey', persona: 'maya-chen' },
+          plan: 'FETCH FROM INDEXED FUNCTION SEARCH_INDEX; vector.neighbors',
+        },
+      ],
+      model: {
+        provider: 'ollama',
+        model: 'embeddinggemma:300m',
+        dimensions: 768,
+        ranking: 'One statement intersects four conditions.',
+        filtering: 'Intersection semantics.',
+      },
+    });
+    await h.fixture.whenStable();
+    expect(h.routeNativeElement!.textContent).toContain('Proof mode:');
+    expect(h.routeNativeElement!.textContent).toContain('ALL 4 MATCHED');
+    expect(h.routeNativeElement!.textContent).toContain("Priya's Honey Stonefruit");
+    expect(h.routeNativeElement!.textContent).not.toContain('combined score');
+  });
   it('keeps controls usable after an invalid query and reloads successfully', async () => {
     const h = await RouterTestingHarness.create('/demo/discover?query=test');
     http

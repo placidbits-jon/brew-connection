@@ -1,6 +1,6 @@
 # Rehearse recipes, notes, and provenance
 
-Start Aspire using the [README](../README.md) and restore the story seed before the walkthrough. The [slide deck](arcadedb-coffee-demo.md) contains the four Phase 4 checkpoints.
+Start Aspire using the [README](../README.md) and restore the story seed before the walkthrough. The [Reveal.js slide source](../src/coffee-community-slides/public/slides.html) contains the four Phase 4 checkpoints.
 
 ## Explore and publish a recipe
 

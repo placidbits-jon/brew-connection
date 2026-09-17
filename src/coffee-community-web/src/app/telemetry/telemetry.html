@@ -222,36 +222,83 @@
       [queries]="eventMetricQueries()"
       description="Native aggregation supplies sample count, total count and percentile. The API divides total count by the 120-minute window for events per minute."
     />
+    <section class="bucket-demo" aria-labelledby="bucket-demo-title">
+      <div>
+        <span class="eyebrow">QUERY-TIME REGROUPING</span>
+        <h3 id="bucket-demo-title">Same samples, a different time resolution.</h3>
+        <p>
+          ArcadeDB groups the 120 stored minute samples when you run the query. No samples are
+          rewritten or removed.
+        </p>
+      </div>
+      <div class="bucket-equation" aria-live="polite">
+        <strong>{{ data.sampleCount }} × 1-minute samples</strong>
+        <span aria-hidden="true">→</span>
+        <strong>{{ data.buckets.length }} × {{ data.bucketMinutes }}-minute buckets</strong>
+        <span>{{ data.totalCount | number }} events preserved</span>
+      </div>
+    </section>
     <form (submit)="changeBuckets($event)">
       <label
-        >Bucket size<select aria-label="Bucket size" [formField]="fields.bucketMinutes">
+        >Group samples into<select
+          aria-label="Bucket size"
+          [value]="model().bucketMinutes"
+          (change)="chooseBucketMinutes($event)"
+        >
           <option value="1">1 minute</option>
           <option value="5">5 minutes</option>
           <option value="10">10 minutes</option>
           <option value="30">30 minutes</option>
           <option value="60">60 minutes</option>
         </select></label
-      ><button type="submit">Update buckets</button>
+      ><button type="submit">Regroup samples</button>
     </form>
-    <div class="bars" aria-label="Event counts by time bucket">
-      @for (item of data.buckets; track item.timestamp; let i = $index) {
-        <button
-          (click)="bucket.set(i)"
-          [class.selected]="bucket() === i"
-          [style.height.%]="(item.count / maxBucket()) * 100"
-          [attr.aria-label]="
-            (item.timestamp | date: 'HH:mm' : 'UTC') + ' UTC: ' + item.count + ' events'
-          "
-          [title]="(item.timestamp | date: 'HH:mm' : 'UTC') + ' UTC: ' + item.count + ' events'"
-        >
-          <span>{{ item.count }}</span>
-        </button>
-      }
+    <div class="bucket-chart">
+      <div class="chart-scale" aria-hidden="true">
+        <span>{{ bucketScale() | number: '1.0-0' }} events</span><span>0</span>
+      </div>
+      <div class="bars" aria-label="Event counts by time bucket">
+        @for (item of data.buckets; track item.timestamp; let i = $index) {
+          <button
+            (click)="bucket.set(i)"
+            [class.selected]="bucket() === i"
+            [style.height.%]="(item.count / bucketScale()) * 100"
+            [attr.aria-label]="
+              (item.timestamp | date: 'HH:mm' : 'UTC') + ' UTC: ' + item.count + ' events'
+            "
+            [title]="(item.timestamp | date: 'HH:mm' : 'UTC') + ' UTC: ' + item.count + ' events'"
+          >
+            <span>{{ item.count }}</span>
+          </button>
+        }
+      </div>
     </div>
+    <p class="chart-caption">
+      Fixed to a 60-minute reference scale so larger query buckets visibly accumulate more events.
+      Select a bar to inspect its exact interval.
+    </p>
     @if (data.buckets[bucket()]; as item) {
-      <p>
+      <dl class="selected-bucket" aria-live="polite">
+        <div>
+          <dt>Selected interval</dt>
+          <dd>
+            {{ item.timestamp | date: 'HH:mm' : 'UTC' }}–{{
+              item.timestamp + data.bucketMinutes * 60000 | date: 'HH:mm' : 'UTC'
+            }}
+            UTC
+          </dd>
+        </div>
+        <div>
+          <dt>Events in bucket</dt>
+          <dd>{{ item.count | number }}</dd>
+        </div>
+        <div>
+          <dt>Average rate</dt>
+          <dd>{{ item.ratePerMinute | number: '1.0-2' }} / minute</dd>
+        </div>
+      </dl>
+      <p class="visually-hidden">
         Selected bucket: {{ item.timestamp | date: 'HH:mm' : 'UTC' }} UTC · {{ item.count }} events
-        · {{ item.ratePerMinute | number: '1.0-2' }} per minute
       </p>
     }
     <app-query-inspector

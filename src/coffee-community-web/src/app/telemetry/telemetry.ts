@@ -2,7 +2,6 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { form, FormField } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   catchError,
@@ -92,7 +91,7 @@ interface Counter {
 }
 @Component({
   selector: 'app-telemetry',
-  imports: [RouterLink, FormField, DatePipe, DecimalPipe, QueryInspector, WhyOneDatabase],
+  imports: [RouterLink, DatePipe, DecimalPipe, QueryInspector, WhyOneDatabase],
   templateUrl: './telemetry.html',
   styleUrl: './telemetry.scss',
 })
@@ -116,7 +115,6 @@ export class Telemetry {
   protected readonly second = signal(30);
   protected readonly bucket = signal(0);
   protected readonly model = signal({ bucketMinutes: '10' });
-  protected readonly fields = form(this.model);
   protected readonly sample = computed(() =>
     this.brew()?.samples.find((s) => s.second === this.second()),
   );
@@ -189,9 +187,11 @@ export class Telemetry {
         : query,
     );
   }
-  protected readonly maxBucket = computed(() =>
-    Math.max(1, ...(this.pulse()?.buckets.map((b) => b.count) ?? [])),
-  );
+  protected readonly bucketScale = computed(() => {
+    const data = this.pulse();
+    if (!data) return 1;
+    return Math.max(1, data.ratePerMinute * 60, ...data.buckets.map((b) => b.count));
+  });
   constructor() {
     combineLatest([
       this.route.data,
@@ -205,6 +205,7 @@ export class Telemetry {
           this.replayRunId = null;
           this.mode.set(d['mode']);
           this.model.set({ bucketMinutes: q.get('bucketMinutes') ?? '10' });
+          this.bucket.set(0);
           this.brew.set(null);
           this.pulse.set(null);
           this.retentionQueries.set([]);
@@ -307,6 +308,9 @@ export class Telemetry {
       relativeTo: this.route,
       queryParams: { bucketMinutes: this.model().bucketMinutes },
     });
+  }
+  protected chooseBucketMinutes(event: Event) {
+    this.model.set({ bucketMinutes: (event.target as HTMLSelectElement).value });
   }
   protected addTasting() {
     if (this.counterBusy()) return;

@@ -26,6 +26,17 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
     private static string Batch(int i) => i == 0 ? "ethiopia-blueberry-bloom" : $"roast-batch-{i:0000}";
     private static string Recipe(int i) => i == 0 ? "blueberry-v60" : $"recipe-{i:000}";
     private static string Brew(int i) => i == 0 ? "blueberry-bloom-v60" : $"brew-{i:000}";
+    private static readonly int[] EventTenMinuteTotals = [5, 10, 15, 20, 30, 40, 60, 70, 50, 30, 20, 10];
+    private static int EventTastingCount(int minute)
+    {
+        var bucket = minute / 10;
+        var minuteInBucket = minute % 10;
+        var total = EventTenMinuteTotals[bucket];
+        var baseline = total / 10;
+        var remainder = total % 10;
+        // Multiplication by 7 permutes 0–9, spreading any remainder across the interval.
+        return baseline + ((minuteInBucket * 7 + bucket * 3) % 10 < remainder ? 1 : 0);
+    }
 
     public async Task SeedAsync(string profile, CancellationToken ct)
     {
@@ -63,7 +74,15 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         }
         for (var i = 0; i < 100; i++)
         {
-            await Record("Brew", new { slug = Brew(i), name = i == 0 ? "Priya's Blueberry Bloom V60" : $"Community Brew {i}", startedAt = "2026-09-14 16:00:00", method = "v60", device = $"scale-{i % 8}", targetFlowRate = 4.0 }, ct);
+            var brewName = i switch
+            {
+                0 => "Priya's Blueberry Bloom V60",
+                1 => "Luis's Dark Roast V60",
+                2 => "Maya's Summer Orchard Pour-over",
+                3 => "Priya's Honey Stonefruit V60",
+                _ => $"Community Brew {i}"
+            };
+            await Record("Brew", new { slug = Brew(i), name = brewName, startedAt = "2026-09-14 16:00:00", method = "v60", device = $"scale-{i % 8}", targetFlowRate = 4.0 }, ct);
             await Edge("BREWED", "Person", Person(i == 0 ? 1 : i % 40), "Brew", Brew(i), "shared a cup", ct);
             await Edge("USED_BATCH", "Brew", Brew(i), "RoastBatch", Batch(i % 25), "20 grams", ct);
             await Edge("USED_RECIPE", "Brew", Brew(i), "Recipe", Recipe(i % 20), "revision 2", ct);
@@ -75,11 +94,38 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         await Edge("LOVED", "Person", Person(0), "Brew", Brew(0), "Blueberry and jasmine", ct);
         await Edge("LOVED", "Person", Person(1), "Brew", Brew(3), "Honey stonefruit favorite", ct);
         await Edge("LIKED_RECIPE", "Person", Person(0), "Recipe", Recipe(0), "Try at home", ct);
-        await Record("Game", new { slug = "coffee-cards", name = "Coffee Cards" }, ct);
-        await Record("GameSession", new { slug = "maya-luis-rematch", name = "Coffee Cards: Maya versus Luis", gameSlug = "coffee-cards", winnerSlug = "luis-ortega", scores = new { maya = 7, luis = 10 } }, ct);
-        await Edge("PLAYED_IN", "Person", Person(0), "GameSession", "maya-luis-rematch", "7 points", ct);
-        await Edge("PLAYED_IN", "Person", Person(2), "GameSession", "maya-luis-rematch", "10 points", ct);
-        await Edge("BEAT_IN_GAME", "Person", Person(2), "Person", Person(0), "Coffee Cards, 10–7; session maya-luis-rematch", ct);
+        var games = new[]
+        {
+            new { slug = "wingspan", name = "Wingspan", category = "Strategy", mechanics = new[] { "engine building", "card drafting" }, playerRange = "1–5", playMinutes = 70 },
+            new { slug = "magic-the-gathering", name = "Magic the Gathering", category = "Trading card game", mechanics = new[] { "deck building", "dueling" }, playerRange = "2", playMinutes = 45 },
+            new { slug = "monopoly", name = "Monopoly", category = "Classic board game", mechanics = new[] { "trading", "area control" }, playerRange = "2–8", playMinutes = 120 },
+            new { slug = "bid-whist", name = "Bid Whist", category = "Trick-taking card game", mechanics = new[] { "bidding", "partnerships" }, playerRange = "4", playMinutes = 50 },
+            new { slug = "pokemon-tcg", name = "Pokemon TCG", category = "Trading card game", mechanics = new[] { "deck building", "dueling" }, playerRange = "2", playMinutes = 35 },
+        };
+        foreach (var game in games) await Record("Game", game, ct);
+
+        var gameSessions = new[]
+        {
+            new { slug = "maya-priya-wingspan", game = "wingspan", one = Person(0), two = Person(1), winner = Person(0), loser = Person(1), winnerScore = 91, loserScore = 84, playedAt = "2026-09-14 16:25:00", oneDrink = Brew(0), oneNote = "Blueberry and jasmine", twoDrink = Brew(3), twoNote = "Honeyed stone fruit" },
+            new { slug = "maya-luis-magic", game = "magic-the-gathering", one = Person(0), two = Person(2), winner = Person(2), loser = Person(0), winnerScore = 2, loserScore = 1, playedAt = "2026-09-14 17:05:00", oneDrink = Brew(2), oneNote = "Berry nectar and blossom", twoDrink = Brew(1), twoNote = "Smoky cocoa" },
+            new { slug = "priya-luis-monopoly", game = "monopoly", one = Person(1), two = Person(2), winner = Person(1), loser = Person(2), winnerScore = 1320, loserScore = 980, playedAt = "2026-09-14 17:40:00", oneDrink = Brew(3), oneNote = "Honeyed stone fruit", twoDrink = Brew(1), twoNote = "Smoky cocoa" },
+            new { slug = "maya-priya-bid-whist", game = "bid-whist", one = Person(0), two = Person(1), winner = Person(1), loser = Person(0), winnerScore = 7, loserScore = 5, playedAt = "2026-09-14 18:20:00", oneDrink = Brew(0), oneNote = "Blueberry and jasmine", twoDrink = Brew(3), twoNote = "Honeyed stone fruit" },
+            new { slug = "maya-luis-pokemon", game = "pokemon-tcg", one = Person(0), two = Person(2), winner = Person(0), loser = Person(2), winnerScore = 2, loserScore = 1, playedAt = "2026-09-14 19:00:00", oneDrink = Brew(2), oneNote = "Berry nectar and blossom", twoDrink = Brew(1), twoNote = "Smoky cocoa" },
+        };
+        foreach (var session in gameSessions)
+        {
+            var game = games.Single(g => g.slug == session.game);
+            var oneName = session.one == Person(0) ? "Maya" : session.one == Person(1) ? "Priya" : "Luis";
+            var twoName = session.two == Person(0) ? "Maya" : session.two == Person(1) ? "Priya" : "Luis";
+            await Record("GameSession", new { session.slug, name = $"{game.name}: {oneName} versus {twoName}", gameSlug = session.game, session.playedAt, winnerSlug = session.winner, loserSlug = session.loser, session.winnerScore, session.loserScore }, ct);
+            await Edge("PLAYED_IN", "Person", session.one, "GameSession", session.slug, $"Played {game.name}", ct);
+            await Edge("PLAYED_IN", "Person", session.two, "GameSession", session.slug, $"Played {game.name}", ct);
+            await Statement($"UPDATE PLAYED_IN SET drink=(SELECT FROM Brew WHERE slug={Json(session.oneDrink)}), drinkNote={Json(session.oneNote)} WHERE @out.slug={Json(session.one)} AND @in.slug={Json(session.slug)}", ct);
+            await Statement($"UPDATE PLAYED_IN SET drink=(SELECT FROM Brew WHERE slug={Json(session.twoDrink)}), drinkNote={Json(session.twoNote)} WHERE @out.slug={Json(session.two)} AND @in.slug={Json(session.slug)}", ct);
+            await Edge("BEAT_IN_GAME", "Person", session.winner, "Person", session.loser, $"{game.name}, {session.winnerScore}–{session.loserScore}; session {session.slug}", ct);
+            await Statement($"UPDATE BEAT_IN_GAME SET score={session.winnerScore}, opponentScore={session.loserScore}, sessionSlug={Json(session.slug)} WHERE @out.slug={Json(session.winner)} AND @in.slug={Json(session.loser)} AND context={Json($"{game.name}, {session.winnerScore}–{session.loserScore}; session {session.slug}")}", ct);
+            await Statement($"UPDATE GameSession SET game=(SELECT FROM Game WHERE slug={Json(session.game)}), area=(SELECT FROM VenueArea WHERE slug='area-1') WHERE slug={Json(session.slug)}", ct);
+        }
         for (var i = 0; i < people; i++)
         {
             await Edge("ATTENDED", "Person", Person(i), "Event", "brew-connection-2026", "conference badge", ct);
@@ -91,10 +137,8 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
         await Statement("UPDATE Note SET owner=(SELECT FROM Person WHERE slug='maya-chen'), subject=(SELECT FROM Brew WHERE slug='blueberry-bloom-v60') WHERE slug='maya-blueberry-memory'", ct);
         await Record("Note", new { slug = "public-orchard-note", ownerSlug = "priya-nair", visibility = "public", body = "Summer orchard tastes like berry nectar and blossom.", searchText = "Summer orchard berry nectar fragrant blossom", createdAt = "2026-09-14 16:00:00" }, ct);
         await Statement("UPDATE Note SET owner=(SELECT FROM Person WHERE slug='priya-nair'), subject=(SELECT FROM RoastBatch WHERE slug='roast-batch-0002') WHERE slug='public-orchard-note'", ct);
-        await Statement("UPDATE BEAT_IN_GAME SET score=10, opponentScore=7, sessionSlug='maya-luis-rematch'", ct);
         await Statement("UPDATE TASTED SET reaction='sweet and floral'", ct);
         await Statement("UPDATE LOVED SET reaction='loved'", ct);
-        await Statement("UPDATE GameSession SET game=(SELECT FROM Game WHERE slug='coffee-cards'), area=(SELECT FROM VenueArea WHERE slug='pour-over-bar')", ct);
         for (var i = 0; i < 20; i++)
             await Statement($"UPDATE USED_RECIPE SET revision=(SELECT FROM RecipeRevision WHERE slug='{Recipe(i)}-v2') WHERE @in.slug='{Recipe(i)}'", ct);
         await Record("BadgeLookup", new { slug = "short-blueberry", targetSlug = "ethiopia-blueberry-bloom", kind = "short-code" }, ct);
@@ -127,7 +171,7 @@ public sealed class CommunitySeeder(ArcadeDbClient db, EmbeddingClient embedding
                 if ((i + 1) % 250000 == 0) logger.LogInformation("Seed telemetry: {Samples}/{Total} samples", i + 1, samples);
             }
         }
-        for (var i = 0; i < 120; i++) lines.Append(CultureInfo.InvariantCulture, $"EventActivity,event_id=brew-connection-2026,area=pour-over-bar,kind=tasting count={i % 5 + 1}.0,duration=30.0 {Epoch + i * 60000L}\n");
+        for (var i = 0; i < 120; i++) lines.Append(CultureInfo.InvariantCulture, $"EventActivity,event_id=brew-connection-2026,area=pour-over-bar,kind=tasting count={EventTastingCount(i)}.0,duration=30.0 {Epoch + i * 60000L}\n");
         await db.WriteTimeSeriesAsync(lines.ToString(), ct);
         using var done = await db.CommandAsync("sql", "UPDATE EventConfiguration SET seedComplete=true, telemetrySamples=:samples, embeddingCount=:vectorCount, peopleCount=:people, roastBatchCount=:batches, telemetryEpoch=:epoch, features={graph:true,documents:true,fullText:true,vectors:true,timeSeries:true,geospatial:true}, embeddingProvider='ollama' WHERE slug='brew-connection-2026'", new { samples, vectorCount, people, batches, epoch = Epoch }, ct);
         logger.LogInformation("Seed {Profile} complete: {People} people, {Batches} coffees, {Vectors} vectors, {Samples} samples.", profile, people, batches, vectorCount, samples);

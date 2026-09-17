@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Validate the Obsidian demo deck and export its browser-smoke contract."""
+"""Validate the Reveal.js demo deck and export its browser-smoke contract."""
 
 import argparse
+import html
 import json
 import re
 import sys
@@ -9,10 +10,14 @@ from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
 
 
-FIELD_NAMES = ("ArcadeDB", "Activate demo", "Action", "Look for")
+NOTE_FIELD_NAMES = ("Activate demo", "Action", "Look for")
+FIELD_NAMES = ("ArcadeDB", *NOTE_FIELD_NAMES)
 FALLBACK_ROUTES = {"demo/:feature", "demo/:feature/:slug", "**"}
-MARKER_RE = re.compile(r"^<!--\s*(demo|slide):\s*([a-z0-9]+(?:-[a-z0-9]+)*)\s*-->$", re.MULTILINE)
+SECTION_RE = re.compile(r"<section\b(?P<attrs>[^>]*)>(?P<body>.*?)</section>", re.IGNORECASE | re.DOTALL)
+ASIDE_RE = re.compile(r"<aside\b(?P<attrs>[^>]*)>(?P<body>.*?)</aside>", re.IGNORECASE | re.DOTALL)
+ATTRIBUTE_RE = re.compile(r"([\w-]+)\s*=\s*(['\"])(.*?)\2", re.DOTALL)
 PATH_RE = re.compile(r"\bpath:\s*['\"]([^'\"]+)['\"]")
+TAG_RE = re.compile(r"<[^>]+>")
 
 
 def route_matches(template: str, path: str) -> bool:
@@ -23,22 +28,32 @@ def route_matches(template: str, path: str) -> bool:
     )
 
 
+def attributes(source: str) -> dict[str, str]:
+    return {name: html.unescape(value) for name, _, value in ATTRIBUTE_RE.findall(source)}
+
+
+def plain_text(source: str) -> str:
+    return " ".join(html.unescape(TAG_RE.sub(" ", source)).split())
+
+
 def field(slide: str, name: str) -> str | None:
-    match = re.search(rf"^\*\*{re.escape(name)}:\*\*[ \t]*([^\r\n]*?)[ \t]*$", slide, re.MULTILINE)
-    value = match.group(1).strip() if match else ""
+    match = re.search(
+        rf"<p\b[^>]*>\s*<strong\b[^>]*>\s*{re.escape(name)}:\s*</strong>(.*?)</p>",
+        slide,
+        re.IGNORECASE | re.DOTALL,
+    )
+    value = plain_text(match.group(1)) if match else ""
     return value or None
 
 
 def validate(deck_path: Path, manifest_path: Path, routes_path: Path):
     errors: list[str] = []
     deck = deck_path.read_text(encoding="utf-8")
-    malformed = [str(number) for number, line in enumerate(deck.splitlines(), 1)
-                 if line.strip() == "---" and line != "---"]
-    if malformed:
-        errors.append(f"malformed slide separator on line(s) {', '.join(malformed)}")
-    slides = re.split(r"^---$", deck, flags=re.MULTILINE)
-    if any(not slide.strip() for slide in slides):
-        errors.append("empty slide caused by a leading, trailing, or repeated separator")
+    slides = list(SECTION_RE.finditer(deck))
+    if not slides:
+        errors.append("deck does not contain any Reveal.js section elements")
+    if deck.lower().count("<section") != len(slides) or deck.lower().count("</section>") != len(slides):
+        errors.append("deck contains an unclosed or nested section element")
 
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -63,12 +78,17 @@ def validate(deck_path: Path, manifest_path: Path, routes_path: Path):
 
     features = []
     ids: set[str] = set()
-    for index, slide in enumerate(slides, 1):
-        markers = MARKER_RE.findall(slide)
-        if len(markers) != 1:
-            errors.append(f"slide {index} must have exactly one demo or slide marker")
+    for index, slide_match in enumerate(slides, 1):
+        slide_attrs = attributes(slide_match.group("attrs"))
+        slide = slide_match.group("body")
+        kind = slide_attrs.get("data-slide-kind")
+        activation_id = slide_attrs.get("data-slide-id", "")
+        if kind not in {"demo", "slide"}:
+            errors.append(f"slide {index} must have data-slide-kind=demo or slide")
             continue
-        kind, activation_id = markers[0]
+        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", activation_id):
+            errors.append(f"slide {index} has an invalid or missing data-slide-id")
+            continue
         if activation_id in ids:
             errors.append(f"duplicate activation id: {activation_id}")
         ids.add(activation_id)
@@ -77,22 +97,46 @@ def validate(deck_path: Path, manifest_path: Path, routes_path: Path):
                 errors.append(f"nonfeature slide {activation_id} contains Activate demo")
             continue
 
-        title_match = re.search(r"^##\s+(.+?)\s*$", slide, re.MULTILINE)
-        if not title_match:
+        note_matches = [
+            match for match in ASIDE_RE.finditer(slide)
+            if "notes" in attributes(match.group("attrs")).get("class", "").split()
+        ]
+        if len(note_matches) != 1:
+            errors.append(f"feature {activation_id} must have exactly one presenter notes block")
+            notes = ""
+        else:
+            notes = note_matches[0].group("body")
+        visible_slide = ASIDE_RE.sub("", slide)
+
+        title_match = re.search(r"<h2\b[^>]*>(.*?)</h2>", visible_slide, re.IGNORECASE | re.DOTALL)
+        title = plain_text(title_match.group(1)) if title_match else ""
+        if not title:
             errors.append(f"feature {activation_id} is missing an H2 title")
             continue
-        values = {name: field(slide, name) for name in FIELD_NAMES}
-        for name, value in values.items():
+        values = {
+            "ArcadeDB": field(visible_slide, "ArcadeDB"),
+            **{name: field(notes, name) for name in NOTE_FIELD_NAMES},
+        }
+        if not values["ArcadeDB"]:
+            errors.append(f"feature {activation_id} is missing ArcadeDB")
+        for name in NOTE_FIELD_NAMES:
+            value = values[name]
             if not value:
-                errors.append(f"feature {activation_id} is missing {name}")
-        activation = values["Activate demo"]
+                errors.append(f"feature {activation_id} presenter notes are missing {name}")
+            if field(visible_slide, name):
+                errors.append(f"feature {activation_id} exposes presenter-only {name} on the slide")
+
+        activation = re.search(
+            r"<p\b[^>]*>\s*<strong\b[^>]*>\s*Activate demo:\s*</strong>\s*"
+            r"<a\b(?P<attrs>[^>]*)>.*?</a>\s*</p>",
+            notes,
+            re.IGNORECASE | re.DOTALL,
+        )
         if not activation:
             continue
-        link = re.fullmatch(r"\[[^\]]+\]\(([^)]+)\)", activation)
-        if not link:
-            errors.append(f"feature {activation_id} has malformed Activate demo link")
-            continue
-        url = link.group(1)
+        link_attrs = attributes(activation.group("attrs"))
+        url = link_attrs.get("href", "")
+        demo_path = link_attrs.get("data-demo-path", "")
         try:
             parsed = urlsplit(url)
             valid_origin = parsed.scheme == "http" and parsed.hostname == "localhost" and parsed.port == 4200
@@ -104,6 +148,8 @@ def validate(deck_path: Path, manifest_path: Path, routes_path: Path):
                 or re.search(r"%(?![0-9A-Fa-f]{2})", url)):
             errors.append(f"feature {activation_id} has malformed demo URL: {url}")
             continue
+        if demo_path != parsed.path + (f"?{parsed.query}" if parsed.query else ""):
+            errors.append(f"feature {activation_id} data-demo-path does not match href")
         try:
             query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
         except ValueError as exc:
@@ -122,7 +168,7 @@ def validate(deck_path: Path, manifest_path: Path, routes_path: Path):
         if all(values.values()):
             features.append({
                 "id": activation_id,
-                "title": title_match.group(1),
+                "title": title,
                 "url": url,
                 "action": values["Action"],
                 "lookFor": values["Look for"],
@@ -133,7 +179,11 @@ def validate(deck_path: Path, manifest_path: Path, routes_path: Path):
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--deck", type=Path, default=root / "docs/arcadedb-coffee-demo.md")
+    parser.add_argument(
+        "--deck",
+        type=Path,
+        default=root / "src/coffee-community-slides/public/slides.html",
+    )
     parser.add_argument("--manifest", type=Path, default=root / "src/coffee-community-web/src/app/demo-route-manifest.json")
     parser.add_argument("--routes", type=Path, default=root / "src/coffee-community-web/src/app/app.routes.ts")
     parser.add_argument("--json", action="store_true", help="write the feature contract as JSON")
@@ -146,8 +196,8 @@ def main() -> int:
     if args.json:
         print(json.dumps(features, indent=2, ensure_ascii=False))
     else:
-        slide_count = len(re.split(r"^---$", args.deck.read_text(encoding="utf-8"), flags=re.MULTILINE))
-        print(f"Validated {len(features)} feature slides across {slide_count} deck slides.")
+        slide_count = len(SECTION_RE.findall(args.deck.read_text(encoding="utf-8")))
+        print(f"Validated {len(features)} feature slides across {slide_count} Reveal.js slides.")
     return 0
 
 

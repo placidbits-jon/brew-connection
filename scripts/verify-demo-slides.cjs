@@ -81,6 +81,26 @@ const actions = {
       "Parameters",
     );
   },
+  "Games become connections": async () => {
+    await checked(page.locator(".game-grid article")).toHaveCount(5);
+    for (const game of [
+      "Wingspan",
+      "Magic the Gathering",
+      "Monopoly",
+      "Bid Whist",
+      "Pokemon TCG",
+    ]) await visible(page.locator(".game-grid"), game);
+    await visible(page.locator(".history"), "Wingspan");
+    await visible(page.locator(".history"), "Magic the Gathering");
+    await visible(page.locator(".history"), "Your cup");
+    await visible(page.locator(".history"), "Priya Nair’s cup");
+    await visible(page.locator(".history"), "Honeyed stone fruit");
+    await checked(page.locator(".opponent-cup a").first()).toHaveAttribute("href", /\/demo\/coffee\/roast-batch-0003/);
+    await button("Inspect Game journey queries").click();
+    await visible(page.getByRole("region", { name: "Game journey queries" }), "PLAYED_IN");
+    await visible(page.getByRole("region", { name: "Game journey queries" }), "USED_BATCH");
+    await button("Hide Game journey queries").click();
+  },
   "Who beat me?": async () => {
     await checked(page.locator('#rematch-results')).toHaveCount(0);
     await button("Show rematch candidates").click();
@@ -89,8 +109,8 @@ const actions = {
     await checked(page.getByRole('region', {name:'Rematch candidates queries'})).not.toContainText('WANTS_TO_RECONNECT');
     await button('Hide Rematch candidates queries').click();
     await visible(page.locator("#rematches"), "Luis Ortega");
-    await visible(page.locator("#rematches"), "Your score 7 · Their score 10");
-    await visible(page.locator("#rematches"), "maya-luis-rematch");
+    await visible(page.locator("#rematches"), "Your score 1 · Their score 2");
+    await visible(page.locator("#rematches"), "maya-luis-magic");
   },
   "The shortest social path": async () => {
     await button("Find shortest path").click();
@@ -277,23 +297,23 @@ const actions = {
   },
   "The event, in time buckets": async () => {
     await page.getByLabel("Bucket size", { exact: true }).selectOption("10");
-    await button("Update buckets").click();
+    await button("Regroup samples").click();
     await checked(page.locator(".bars button")).toHaveCount(12);
     await page.locator(".bars button").first().click();
     await visible(
       page.locator("main"),
-      "Selected bucket: 16:00 UTC · 30 events",
+      "Selected bucket: 16:00 UTC · 5 events",
     );
     await checked(page.locator(".metrics dd")).toHaveText([
       "360",
       "120",
-      "5",
+      "7",
       "3",
     ]);
     await checked(page.locator(".examples table tbody tr")).toHaveCount(4);
     await checked(
       page.locator(".examples table tbody tr td:nth-child(2)"),
-    ).toHaveText(["90", "90", "90", "90"]);
+    ).toHaveText(["30", "90", "180", "60"]);
   },
   "Nearby coffee, connected": async () => {
     await button("Find nearby").click();

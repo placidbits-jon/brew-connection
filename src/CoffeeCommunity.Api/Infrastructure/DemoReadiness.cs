@@ -38,7 +38,7 @@ public sealed class DemoReadiness
         error = _error,
         demoRoutes = new[]
         {
-            "/demo/story", "/demo/passport/maya-chen", "/demo/discover", "/demo/network/maya-chen",
+            "/demo/story", "/demo/passport/maya-chen", "/demo/discover", "/demo/network/maya-chen", "/demo/games/maya-chen",
             "/demo/brews/blueberry-bloom-v60", "/demo/pulse", "/demo/map", "/demo/transactions", "/demo/lab"
         }
     };

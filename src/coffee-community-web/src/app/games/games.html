@@ -1,0 +1,105 @@
+<main>
+  <header>
+    <a routerLink="/demo/story">BREW CONNECTION</a>
+    <span>GAME LOUNGE · LIVE GRAPH</span>
+  </header>
+
+  <section class="hero">
+    <p class="kicker">THE GAMES BEHIND THE CONNECTIONS</p>
+    <h1>Find your next<br><em>table.</em></h1>
+    <p class="lede">Real games, real sessions, and the people on the other side of the table—all connected in ArcadeDB.</p>
+    <label class="persona-switcher">
+      <span>Explore game journey as</span>
+      <select [value]="journey()?.person?.slug ?? 'maya-chen'" (change)="changePersona($event)">
+        <option value="maya-chen">Maya Chen · attendee</option>
+        <option value="priya-nair">Priya Nair · brewer</option>
+        <option value="luis-ortega">Luis Ortega · game host</option>
+      </select>
+    </label>
+  </section>
+
+  @if (loading()) { <p class="state" role="status">Shuffling the game history…</p> }
+  @if (error()) { <p class="state error" role="alert">{{ error() }}</p> }
+  @if (journey(); as data) {
+    <section class="scoreboard" aria-label="Game journey summary">
+      <div><strong>{{ data.stats.games }}</strong><span>games played</span></div>
+      <div><strong>{{ data.stats.sessions }}</strong><span>sessions</span></div>
+      <div><strong>{{ data.stats.wins }}</strong><span>wins</span></div>
+      <div><strong>{{ data.tableMatches.length }}</strong><span>table matches</span></div>
+    </section>
+
+    <section class="split">
+      <div>
+        <p class="kicker">PLAY HISTORY</p>
+        <h2>{{ data.person.name }}’s game record</h2>
+        <ol class="history">
+          @for (session of data.history; track session.sessionSlug) {
+            <li>
+              <div class="game-token" [class.loss]="session.outcome === 'Loss'" [class.pending]="session.outcome === 'In progress'">{{ session.outcome === 'Win' ? 'W' : session.outcome === 'Loss' ? 'L' : '·' }}</div>
+              <div>
+                <span class="category">{{ session.category }}</span>
+                <h3>{{ session.gameName }}</h3>
+                <p>vs. {{ session.opponent.name }} · <strong>{{ session.outcome === 'In progress' ? 'Not scored yet' : session.score + '–' + session.opponentScore }}</strong></p>
+                <time>@if (session.playedAt) { {{ session.playedAt | date:'shortTime' }} · }Game lounge</time>
+                @if (session.drink || session.opponentDrink) {
+                  <div class="table-drinks" [attr.aria-label]="'Coffee at ' + session.gameName">
+                    @if (session.drink; as drink) {
+                      <article>
+                        <span>Your cup</span>
+                        <a [routerLink]="['/demo/coffee', drink.roastBatchSlug]" [queryParams]="{persona: data.person.slug}">{{ drink.name }}</a>
+                        <small>{{ drink.coffeeName }} · “{{ drink.note }}”</small>
+                      </article>
+                    }
+                    @if (session.opponentDrink; as drink) {
+                      <article class="opponent-cup">
+                        <span>{{ session.opponent.name }}’s cup</span>
+                        <a [routerLink]="['/demo/coffee', drink.roastBatchSlug]" [queryParams]="{persona: data.person.slug}">{{ drink.name }}</a>
+                        <small>{{ drink.coffeeName }} · “{{ drink.note }}”</small>
+                      </article>
+                    }
+                  </div>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+        <app-query-inspector title="Game journey" [queries]="sectionQueries('Game persona', 'Persona game graph', 'Opponent coffee provenance')" description="A native ArcadeDB MATCH walks person → participation edge → session → opponent edge → opponent. Each participation links to the Brew and on through USED_BATCH to bean-to-cup provenance." />
+      </div>
+
+      <aside>
+        <p class="kicker">FIND A TABLE</p>
+        <h2>People who play what you play</h2>
+        <div class="matches">
+          @for (match of data.tableMatches; track match.slug) {
+            <article>
+              <div class="avatar">{{ match.name.charAt(0) }}</div>
+              <div><h3>{{ match.name }}</h3><p>{{ match.games.join(' · ') }}</p></div>
+              <strong>{{ match.games.length }} shared</strong>
+            </article>
+          } @empty { <p>No shared-game matches yet.</p> }
+        </div>
+        <app-query-inspector title="Community game graph" [queries]="sectionQueries('Community game graph')" description="Edge projections become an affinity view without copying people or games into a second store." />
+      </aside>
+    </section>
+
+    <section class="catalog">
+      <div class="section-heading">
+        <div><p class="kicker">THE SEEDED LIBRARY</p><h2>Five games. One connected model.</h2></div>
+        <p>Game vertices hold flexible catalog metadata. Sessions link to the game and lounge; participation edges connect each player, their cup, and the outcome.</p>
+      </div>
+      <div class="game-grid">
+        @for (game of data.catalog; track game.slug) {
+          <article [class.played]="game.playedByPersona">
+            <div class="card-top"><span>{{ game.category }}</span>@if (game.playedByPersona) { <strong>PLAYED</strong> }</div>
+            <h3>{{ game.name }}</h3>
+            <p>{{ game.mechanics.join(' · ') }}</p>
+            <dl><div><dt>Players</dt><dd>{{ game.playerRange }}</dd></div><div><dt>Time</dt><dd>{{ game.playMinutes }} min</dd></div><div><dt>Community</dt><dd>{{ game.players }} players</dd></div></dl>
+          </article>
+        }
+      </div>
+      <app-query-inspector title="Game catalog" [queries]="sectionQueries('Game catalog')" description="The catalog is queried from the same vertex records used by the live play graph." />
+    </section>
+  }
+
+  <footer><span>ArcadeDB · vertices + edges + links + flexible records</span><a routerLink="/demo/lab" [queryParams]="{view: 'schema'}">Explore the schema →</a></footer>
+</main>

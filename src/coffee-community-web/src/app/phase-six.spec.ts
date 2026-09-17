@@ -65,6 +65,7 @@ const brew = {
 const pulse = {
   event: { slug: 'brew-connection-2026', name: 'Brew Connection at TechCon' },
   area: { slug: 'pour-over-bar', name: 'Pour-over bar' },
+  bucketMinutes: 10,
   buckets: [{ timestamp: 1789401600000, count: 30, ratePerMinute: 3 }],
   sampleCount: 120,
   totalCount: 360,
@@ -166,6 +167,66 @@ describe('Specialized demo routes', () => {
     await h.fixture.whenStable();
     expect(button.disabled).toBe(false);
     expect(h.routeNativeElement!.textContent).toContain('7');
+  });
+  it('shows regrouping output and resets an out-of-range bucket selection', async () => {
+    const tenMinuteBuckets = Array.from({ length: 12 }, (_, i) => ({
+      timestamp: 1789401600000 + i * 600000,
+      count: 30,
+      ratePerMinute: 3,
+    }));
+    const h = await RouterTestingHarness.create('/demo/pulse?bucketMinutes=10');
+    http
+      .expectOne((r) => r.url === '/api/demo/pulse' && r.params.get('bucketMinutes') === '10')
+      .flush({ ...pulse, buckets: tenMinuteBuckets });
+    http.expectOne('/api/demo/counter').flush({
+      value: 0,
+      delta: 0,
+      transient: true,
+      restartBehavior: 'Resets on restart',
+      queries: [],
+    });
+    await h.fixture.whenStable();
+    expect(h.routeNativeElement!.textContent).toContain('12 × 10-minute buckets');
+    h.routeNativeElement!.querySelectorAll<HTMLButtonElement>('.bars button')[11].click();
+
+    const select = h.routeNativeElement!.querySelector<HTMLSelectElement>(
+      'select[aria-label="Bucket size"]',
+    )!;
+    select.value = '60';
+    select.dispatchEvent(new Event('input'));
+    select.dispatchEvent(new Event('change'));
+    h.fixture.detectChanges();
+    Array.from(h.routeNativeElement!.querySelectorAll<HTMLButtonElement>('button'))
+      .find((button) => button.textContent?.trim() === 'Regroup samples')!
+      .click();
+    await h.fixture.whenStable();
+    http
+      .expectOne((r) => r.url === '/api/demo/pulse' && r.params.get('bucketMinutes') === '60')
+      .flush({
+        ...pulse,
+        bucketMinutes: 60,
+        buckets: [
+          { timestamp: 1789401600000, count: 180, ratePerMinute: 3 },
+          { timestamp: 1789405200000, count: 180, ratePerMinute: 3 },
+        ],
+      });
+    http.expectOne('/api/demo/counter').flush({
+      value: 0,
+      delta: 0,
+      transient: true,
+      restartBehavior: 'Resets on restart',
+      queries: [],
+    });
+    await h.fixture.whenStable();
+
+    expect(h.routeNativeElement!.textContent).toContain('2 × 60-minute buckets');
+    expect(h.routeNativeElement!.querySelectorAll('.bars button')).toHaveLength(2);
+    expect(h.routeNativeElement!.querySelector('.bars button.selected')).toBe(
+      h.routeNativeElement!.querySelector('.bars button'),
+    );
+    expect(h.routeNativeElement!.querySelector('.selected-bucket')!.textContent).toContain(
+      '16:00–17:00',
+    );
   });
   it('ignores replay results after navigating to a different brew', async () => {
     const h = await RouterTestingHarness.create('/demo/brews/blueberry-bloom-v60');

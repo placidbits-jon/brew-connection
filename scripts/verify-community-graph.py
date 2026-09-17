@@ -29,7 +29,7 @@ if a.reset:
     call('reset', {})
 network = call('network/maya-chen?target=luis-ortega')
 assert network['paths'][0]['slugs'] == ['maya-chen', 'priya-nair', 'luis-ortega']
-assert any(r['slug']=='luis-ortega' and r['score']==10 for r in network['rematches'])
+assert any(r['slug']=='luis-ortega' and r['score']==2 and r['opponentScore']==1 for r in network['rematches'])
 assert any(p['slug'] == 'luis-ortega' and 'fruit-forward' in p['interests'] for p in network['sharedInterests'])
 call('passport/missing', status=404)
 call('graph/meet', {}, 400)
@@ -44,7 +44,7 @@ mutations = [
     ('tastings', {'personSlug':'maya-chen','brewSlug':'brew-001'}),
     ('loves', {'personSlug':'maya-chen','brewSlug':'brew-001'}),
     ('reconnects', {'personSlug':'maya-chen','targetSlug':'attendee-0003'}),
-    ('game-sessions', {'slug':'integration-game','gameSlug':'coffee-cards','personSlug':'maya-chen','opponentSlug':'priya-nair'}),
+    ('game-sessions', {'slug':'integration-game','gameSlug':'wingspan','personSlug':'maya-chen','opponentSlug':'priya-nair'}),
     ('game-results', {'sessionSlug':'integration-game','winnerSlug':'priya-nair','loserSlug':'maya-chen','winnerScore':21,'loserScore':17})]
 for route, body in mutations:
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:

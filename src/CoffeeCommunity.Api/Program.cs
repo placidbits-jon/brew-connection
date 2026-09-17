@@ -18,6 +18,7 @@ builder.Services.AddSingleton<DemoBootstrapper>();
 builder.Services.AddTransient<DemoExplorer>();
 builder.Services.AddSingleton<CommunityGraphGate>();
 builder.Services.AddTransient<CommunityGraph>();
+builder.Services.AddTransient<CommunityGames>();
 builder.Services.AddTransient<CommunityDocuments>();
 builder.Services.AddTransient<CommunityDiscovery>();
 builder.Services.AddTransient<ArcadeRedisClient>();
@@ -68,6 +69,7 @@ app.MapGet("/api/demo/story", async (string? persona, DemoExplorer explorer, Dem
 });
 
 app.MapCommunityGraph();
+app.MapCommunityGames();
 app.MapCommunityDocuments();
 app.MapCommunityDiscovery();
 app.MapCommunityLocations();

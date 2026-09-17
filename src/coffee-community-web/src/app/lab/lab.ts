@@ -132,7 +132,10 @@ export class Lab {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
-        view: id === 'compatibility-summary' ? 'compatibility' : 'queries',
+        view:
+          this.view() === 'compatibility' || id === 'compatibility-summary'
+            ? 'compatibility'
+            : 'queries',
         example: id,
       },
     });

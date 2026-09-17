@@ -1,6 +1,6 @@
 # Coffee discovery
 
-Open `/demo/discover` or use the four discovery links in [the presentation](arcadedb-coffee-demo.md). The query, mode, persona, subject type, keyword example, source slug, and availability filter live in the URL, so refresh and slide links reconstruct the same search.
+Open `/demo/discover` or use the discovery links in [the Reveal.js presentation source](../src/coffee-community-slides/public/slides.html). The query, mode, persona, subject type, keyword example, source slug, and availability filter live in the URL, so refresh and slide links reconstruct the same search.
 
 ## Compare the four modes
 
@@ -40,6 +40,12 @@ Hybrid scoring is explicit:
 ```
 
 Personalized mode adds 0.50 when the selected person has a stored `MET` relationship with someone who `LOVED` a brew that `USED_BATCH` the candidate coffee and an available vendor `SELLS` it. The bonus is awarded once, independent of duplicate qualifying paths. Explanations show the actual person, acquaintance, brew, vendor, and relationships. Recipes are available to read; roast availability comes from current vendor offers. Ties use slug ordering.
+
+## One-query cross-model proof
+
+Select **One query** to load the curated `stonefruit honey` coffee example. A single parameterized ArcadeDB SQL retrieval starts from native vector-index neighbors, intersects them with a Lucene `SEARCH_INDEX` subquery, and intersects those candidates with a `MATCH` traversal from the selected persona through `MET → LOVED → USED_BATCH → SELLS`. The vendor vertex must be currently available. Surviving coffees are ordered by cosine distance.
+
+This mode deliberately uses strict intersection semantics: a coffee must satisfy all four conditions. It demonstrates cross-model composition inside one database statement, while **Personalized** remains the more useful product behavior for broad discovery because its API-side weighted union can retain strong candidates that lack one signal. The query embedding is computed by the pinned local model before the statement runs. The query inspector shows the single retrieval and its `EXPLAIN` plan; the diagnostic `EXPLAIN` is separate from the retrieval itself.
 
 The query inspector includes executed SQL and Cypher, parameters, and full-text/vector execution plans. Ranking and final filtering run in the API and are labeled accordingly. The route serializes database work with the same gate used for reset and community mutations.
 

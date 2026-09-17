@@ -115,6 +115,13 @@ button:disabled {
   min-height: 18px;
   accent-color: #d68b56;
 }
+.required-filter {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: #b7c9a1;
+  font-size: 13px;
+}
 nav {
   display: flex;
   gap: 8px;
@@ -206,7 +213,6 @@ footer {
   border-top: 1px solid #514b41;
 }
 
-
 pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -261,6 +267,25 @@ pre {
   font-size: 0.8rem;
   color: #a8b5ab;
   max-width: 85ch;
+}
+
+.one-query-note {
+  max-width: 85ch;
+  padding: 14px 16px;
+  border-left: 3px solid #d68b56;
+  background: #181613;
+}
+.one-query-note strong {
+  color: #f1b788;
+}
+.matched {
+  margin-left: auto;
+  color: #b7c9a1;
+  font:
+    12px ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .result-summary {

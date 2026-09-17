@@ -1,0 +1,22 @@
+{
+  "name": "coffee-community-slides",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.12.1",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:deck": "node ../../scripts/verify-reveal-deck.cjs"
+  },
+  "dependencies": {
+    "reveal.js": "6.0.2"
+  },
+  "devDependencies": {
+    "vite": "8.3.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

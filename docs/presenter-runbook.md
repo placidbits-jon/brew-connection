@@ -1,6 +1,6 @@
 # Presenter runbook
 
-This runbook presents the 26 feature slides in `arcadedb-coffee-demo.md` in 15–20 minutes. The deck validator is the source of truth for browser automation:
+This runbook presents the 27 feature slides in the Reveal.js app under `src/coffee-community-slides` in 15–20 minutes. The deck validator is the source of truth for browser automation:
 
 ```bash
 python3 scripts/validate-demo-deck.py --json
@@ -15,6 +15,7 @@ nvm use
 aspire start
 aspire wait api
 aspire wait web
+aspire wait slides
 ```
 
 If DCP rejects the local developer certificate, stop the failed start and use:
@@ -23,6 +24,7 @@ If DCP rejects the local developer certificate, stop the failed start and use:
 ASPIRE_DCP_USE_DEVELOPER_CERTIFICATE=false aspire start
 aspire wait api
 aspire wait web
+aspire wait slides
 ```
 
 Open `http://localhost:4200/demo/story`, reveal the resource state, and wait for all four indicators to turn green. Keep the tokenized Aspire dashboard URL printed by `aspire start` available for logs and resource restarts.
@@ -62,11 +64,11 @@ curl --fail-with-body -X POST \
 
 Do not use the scale profile for the walkthrough. The story reset also removes prior meeting, love, note, recipe-publication, replay, and transaction mutations. The transient Redis tasting count is server memory and is not cleared by a database reset; describe it as a relative `+1`, as the slide does.
 
-## Open the Obsidian presentation
+## Open the Reveal.js presentation
 
-Open `docs` as a vault (or copy the deck into a presentation vault). Enable the **Slides** core plugin. Copy [`obsidian-snippets/coffee-demo.css`](obsidian-snippets/coffee-demo.css) into the vault's `.obsidian/snippets/` directory, then enable **coffee-demo** under **Settings → Appearance → CSS snippets**. This keeps the long title and feature fields within the slide canvas; the default theme's large headings can clip the deck. The snippet affects presentations in that vault.
+Open the `slides` endpoint from the Aspire dashboard. No Obsidian vault, plugin, account, or external file permission is required; Reveal.js, the theme, and the entire deck are installed from this repository. Aspire injects the current `web` endpoint, so each **Activate demo** link in the presenter notes opens the correct Angular resource even when Aspire assigns a different URL.
 
-Open `arcadedb-coffee-demo.md` and run **Slides: Start presentation** from the command palette. Use the arrow controls or focus the presentation and press Left/Right. Each `---` starts one slide; the HTML activation comments are hidden. Activate a feature's HTTP link to open the live app, perform its action, then return to Slides. Keep the runbook out of the presentation.
+Use the arrow controls or press Left/Right to navigate. Press `Esc` or `O` for the slide overview, `S` for the speaker view, `F` for full screen, and `?` for Reveal.js's shortcut list. For every feature slide, the speaker view's Notes panel contains **Activate demo**, **Action**, and **Look for**. Use its HTTP link to open the live app in a new tab, perform the action, then return to the deck. For a printable copy, append `?print-pdf` to the slides URL and print from the browser.
 
 ## Timing and flow
 
@@ -100,6 +102,7 @@ A shared retrieval can feed several visuals. Those inspectors show the same sour
 | `repeatable-community-story` | `/demo/story?persona=maya` | story | `GET /api/demo/story` | deterministic graph/document seed | `verify-community-seed.py`; `verify-demo-slides.cjs` |
 | `record-meeting` | `/demo/meet/maya-chen` | story | `GET /api/demo/passport/{personSlug}`; `POST /api/demo/graph/meet` | indexed badge lookup, idempotent `MET` edge | `verify-community-graph.py`; `verify-demo-slides.cjs` |
 | `coffee-passport` | `/demo/passport/maya-chen` | story | `GET /api/demo/passport/{personSlug}`; `POST /api/demo/graph/loves` | relationship traversal and attributed reaction | `verify-community-graph.py`; `verify-demo-slides.cjs` |
+| `game-lounge` | `/demo/games/maya-chen` | story | `GET /api/demo/games/{personSlug}` | graph pattern matching, participation-edge projection, linked game and brew provenance | `verify-community-seed.py`; `verify-demo-slides.cjs` |
 | `rematch-candidates` | `/demo/network/maya-chen` | story | `GET /api/demo/network/{personSlug}` | scored game edge traversal | `verify-community-graph.py`; `verify-demo-slides.cjs` |
 | `shortest-social-path` | `/demo/network/maya-chen` | story | `GET /api/demo/network/{personSlug}` | breadth-first traversal over `MET` edges | `verify-community-graph.py`; `verify-demo-slides.cjs` |
 | `reconnect-targets` | `/demo/network/maya-chen` | story | `GET /api/demo/network/{personSlug}` | attributed reconnect edges and shared interests | `verify-community-graph.py`; `verify-demo-slides.cjs` |
@@ -130,9 +133,10 @@ Automated runs on 2026-09-14 started with all Aspire services stopped, started t
 |---|---|---:|---|
 | Automated rehearsal 1 | 26/26 passed | 12.106 s browser; 23.2 s startup through finish | `/tmp/phase8-rehearsal-final-1/report.json`, 26 screenshots; browser 17:40:24.865–17:40:36.971 UTC |
 | Automated rehearsal 2 | 26/26 passed | 11.980 s browser; 22.4 s startup through finish | `/tmp/phase8-rehearsal-final-2/report.json`, 26 screenshots; browser 17:41:28.153–17:41:40.133 UTC |
-| Obsidian visual check | 31/31 slides fit; navigation passed | 2026-09-14 | Portable Obsidian 1.13.7 in a temporary profile/vault, 1024 × 800 CSS viewport; `coffee-demo` snippet enabled. All 26 HTTP hrefs match the browser-tested deck. `/tmp/phase8-obsidian/render-report.json` and `slide-01.png` through `slide-31.png`. |
+| Game lounge rehearsal | 27/27 passed | 18.7 s browser | `/tmp/brew-demo-slides/report.json`; includes the seeded Game Lounge journey and all prior demo actions. |
+| Reveal.js visual check | 32/32 slides fit; 27/27 links passed | 2026-09-16 | Chromium at the 1280 × 720 Reveal.js canvas; every demo link resolved to the Aspire-injected `web` endpoint. Reproduce with `SLIDES_URL=<Aspire slides URL> npm --prefix src/coffee-community-slides run test:deck`. |
 | Spoken presentation timing | Pending presenter rehearsal | — | The 17-minute budget is a proposed schedule. Automation does not measure narration or audience transitions; rehearse twice before presenting. |
 
 The report/screenshot paths are local verification artifacts, not checked-in fixtures. To reproduce them, set `DEMO_REPORT_DIR` and `DEMO_CAPTURE_SLIDES=1` when running the browser suite. Initial test-authoring passes needed selector corrections (the About select's accessible name, transaction status/row headers, and query-plan container); these were automation fixes, not live-demo data repairs.
 
-Native rendering initially exposed title clipping with the default Slides theme; the checked-in CSS snippet resolved it across all 31 slides. The portable application came from the [official Obsidian download page](https://obsidian.md/download); the temporary profile avoids changing a presenter's existing vault or settings. External URLs were inspected in Slides and exercised by Chromium automation; the operating system's default-browser integration was not separately asserted.
+The Reveal.js app is checked into the repository with its package lock, HTML slide source, and custom theme. External URLs are derived from the Aspire `web` endpoint at startup and are covered by the 27-step browser rehearsal contract.

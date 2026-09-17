@@ -57,6 +57,15 @@ const catalog = {
       description: 'Combine vector, full-text, graph and availability in one statement.',
       planStatus: 'available',
     },
+    {
+      id: 'compatibility-summary',
+      label: 'Compatibility summary',
+      language: 'sql',
+      command: 'SELECT compatibility checks',
+      parameters: {},
+      description: 'Run the compatibility checks.',
+      planStatus: 'available',
+    },
   ],
   limitations: [],
 };
@@ -146,6 +155,25 @@ describe('Transactions and curated query lab', () => {
     await h.fixture.whenStable();
     expect(h.routeNativeElement!.textContent).toContain("Priya's Honey Stonefruit");
     expect(h.routeNativeElement!.textContent).toContain('vector.neighbors');
+  });
+  it('keeps the compatibility view active when another query is selected', async () => {
+    const h = await RouterTestingHarness.create('/demo/lab?view=compatibility');
+    http.expectOne('/api/demo/lab').flush(catalog);
+    await h.fixture.whenStable();
+    const links = Array.from(h.routeNativeElement!.querySelectorAll<HTMLAnchorElement>('.lab-views a'));
+    const compatibilityLink = links.find((link) => link.textContent?.includes('Compatibility summary'))!;
+    const queryLink = links.find((link) => link.textContent?.includes('Query catalog'))!;
+
+    const sqlBrew = Array.from(
+      h.routeNativeElement!.querySelectorAll<HTMLButtonElement>('.explorer > nav button'),
+    ).find((item) => item.textContent?.includes('SQL brew'))!;
+    sqlBrew.click();
+    await h.fixture.whenStable();
+    http.expectOne('/api/demo/lab').flush(catalog);
+    await h.fixture.whenStable();
+
+    expect(compatibilityLink.classList.contains('active')).toBe(true);
+    expect(queryLink.classList.contains('active')).toBe(false);
   });
   it('does not display an old query response after choosing another example', async () => {
     const h = await RouterTestingHarness.create('/demo/lab?example=sql-brew');

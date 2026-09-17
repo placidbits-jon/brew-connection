@@ -11,6 +11,7 @@
     "demo/meet/:personSlug",
     "demo/passport/:personSlug",
     "demo/network/:personSlug",
+    "demo/games/:personSlug",
     "demo/lab",
     "demo/story"
   ]

@@ -39,7 +39,7 @@ export class Community {
   protected readonly mutationQueries = signal<Query[]>([]);
   protected readonly meetings = computed(() => this.passport()?.timeline.filter(item => item.kind === 'MET') ?? []);
   protected readonly person = computed(() => this.network()?.person ?? this.passport()?.person);
-  protected readonly model = signal({badgeCode: 'badge-0003', context: 'Coffee and conversation', location: 'Community coffee bar', brewSlug: 'blueberry-bloom-v60', targetSlug: 'priya-nair', pathTarget: 'luis-ortega', sessionSlug: 'demo-coffee-cards', gameSlug: 'coffee-cards', opponentSlug: 'priya-nair', winnerScore: 21, loserScore: 17});
+  protected readonly model = signal({badgeCode: 'badge-0003', context: 'Coffee and conversation', location: 'Community coffee bar', brewSlug: 'blueberry-bloom-v60', targetSlug: 'priya-nair', pathTarget: 'luis-ortega', sessionSlug: 'demo-wingspan', gameSlug: 'wingspan', opponentSlug: 'priya-nair', winnerScore: 92, loserScore: 86});
   protected readonly fields = form(this.model, fields => { required(fields.badgeCode); required(fields.context); required(fields.location); required(fields.pathTarget); });
 
   constructor() {

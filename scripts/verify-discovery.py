@@ -27,6 +27,12 @@ def golden():
             assert abs(r['totalScore']-sum(r[k] for k in ['keywordContribution','vectorContribution','graphContribution']))<1e-6
         assert any('FETCH FROM INDEXED FUNCTION SEARCH_INDEX' in (q.get('plan') or '') and 'SCORING' in q['plan'] for q in data['queries']) if mode!='semantic' else True
         assert any("vector.neighbors('SearchEmbedding[embedding]'" in (q.get('plan') or '') and 'FETCH FROM TYPE' not in q['plan'] for q in data['queries']) if mode!='keyword' else True
+    one=search('cross-model',query='stonefruit honey',type='RoastBatch',syntax='plain',availableOnly='true')
+    assert [r['slug'] for r in one['results']]==['roast-batch-0003'],one['results']
+    assert len(one['queries'])==1,one['queries']
+    statement=one['queries'][0]['command']
+    assert all(marker in statement for marker in ['vector.neighbors','SEARCH_INDEX','MATCH','available = true']),statement
+    assert one['queries'][0].get('plan'),one['queries'][0]
     return modes
 if a.reset: call('reset',{})
 first=golden()
@@ -60,4 +66,4 @@ if a.reset:
         assert [r['slug'] for r in first[mode]['results']]==[r['slug'] for r in second[mode]['results']]
         for x,y in zip(first[mode]['results'],second[mode]['results']):
             if x['vectorDistance'] is not None: assert abs(x['vectorDistance']-y['vectorDistance'])<1e-5
-print('PASS: discovery golden modes, full-text examples, filters, validation, atomic publication and reproducibility')
+print('PASS: discovery golden modes, one-query cross-model proof, full-text examples, filters, validation, atomic publication and reproducibility')

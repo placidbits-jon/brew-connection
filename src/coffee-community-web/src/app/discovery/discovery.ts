@@ -66,7 +66,13 @@ export class Discovery {
   protected readonly data = signal<DiscoveryResult | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
-  protected readonly evidenceQueries = computed(() => queriesByLabel(this.data()?.queries, 'Actual acquaintance → favorite brew → available coffee paths', 'Current vendor availability'));
+  protected readonly evidenceQueries = computed(() =>
+    queriesByLabel(
+      this.data()?.queries,
+      'Actual acquaintance → favorite brew → available coffee paths',
+      'Current vendor availability',
+    ),
+  );
   protected readonly mode = signal('keyword');
   protected readonly model = signal({
     query: 'blueberry',
@@ -82,6 +88,7 @@ export class Discovery {
     { value: 'semantic', label: 'Semantic' },
     { value: 'hybrid', label: 'Hybrid' },
     { value: 'personalized', label: 'Personalized' },
+    { value: 'cross-model', label: 'One query' },
   ];
   protected readonly explanation = computed(
     () =>
@@ -90,6 +97,8 @@ export class Discovery {
         semantic: 'Find related meanings with local model embeddings.',
         hybrid: 'Combine keyword relevance and semantic similarity.',
         personalized: 'Add evidence from your community connections.',
+        'cross-model':
+          'Intersect meaning, matching words, community paths, and live availability in one ArcadeDB retrieval.',
       })[this.mode()] ?? 'Choose a discovery mode.',
   );
   constructor() {
@@ -98,11 +107,14 @@ export class Discovery {
         tap(([params]) => {
           this.context++;
           this.interpreting.set(false);
-          this.mode.set(params.get('mode') ?? 'keyword');
+          const selectedMode = params.get('mode') ?? 'keyword';
+          this.mode.set(selectedMode);
           this.model.set({
-            query: params.get('query') ?? 'blueberry',
+            query:
+              params.get('query') ??
+              (selectedMode === 'cross-model' ? 'stonefruit honey' : 'blueberry'),
             persona: params.get('persona') ?? 'maya-chen',
-            type: params.get('type') ?? 'all',
+            type: params.get('type') ?? (selectedMode === 'cross-model' ? 'RoastBatch' : 'all'),
             syntax: params.get('syntax') ?? 'plain',
             similarTo: params.get('similarTo') ?? 'ethiopia-blueberry-bloom',
             availableOnly: params.get('availableOnly') !== 'false',
@@ -135,6 +147,15 @@ export class Discovery {
     this.navigate(this.mode());
   }
   protected changeMode(mode: string): void {
+    if (mode === 'cross-model' && this.mode() !== 'cross-model') {
+      this.model.update((value) => ({
+        ...value,
+        query: 'stonefruit honey',
+        type: 'RoastBatch',
+        syntax: 'plain',
+        availableOnly: true,
+      }));
+    }
     this.navigate(mode);
   }
   protected interpret(event: Event): void {

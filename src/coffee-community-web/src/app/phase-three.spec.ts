@@ -85,8 +85,8 @@ describe('Community graph routes', () => {
     ['Log tasting','tastings',{personSlug:'maya-chen',brewSlug:'blueberry-bloom-v60'}],
     ['Love this cup','loves',{personSlug:'maya-chen',brewSlug:'blueberry-bloom-v60'}],
     ['Save reconnect','reconnects',{personSlug:'maya-chen',targetSlug:'priya-nair'}],
-    ['Start game','game-sessions',{personSlug:'maya-chen',slug:'demo-coffee-cards',gameSlug:'coffee-cards',opponentSlug:'priya-nair'}],
-    ['Record result','game-results',{sessionSlug:'demo-coffee-cards',winnerSlug:'maya-chen',loserSlug:'priya-nair',winnerScore:21,loserScore:17}],
+    ['Start game','game-sessions',{personSlug:'maya-chen',slug:'demo-wingspan',gameSlug:'wingspan',opponentSlug:'priya-nair'}],
+    ['Record result','game-results',{sessionSlug:'demo-wingspan',winnerSlug:'maya-chen',loserSlug:'priya-nair',winnerScore:92,loserScore:86}],
   ])('saves %s and reloads the persisted passport', async (label, endpoint, body) => {
     const harness = await loadPassport();
     button(harness, label as string).click();

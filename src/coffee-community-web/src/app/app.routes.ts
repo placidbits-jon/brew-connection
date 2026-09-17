@@ -7,6 +7,7 @@ import { Discovery } from './discovery/discovery';
 import { Story } from './story/story';
 import { Lab } from './lab/lab';
 import { Community } from './community/community';
+import { Games } from './games/games';
 
 export const routes: Routes = [
   { path: 'demo/transactions', component: Transactions, title: 'Transactions | Brew Connection' },
@@ -65,6 +66,7 @@ export const routes: Routes = [
     data: { mode: 'network' },
     title: 'My network | Brew Connection',
   },
+  { path: 'demo/games/:personSlug', component: Games, title: 'Game lounge | Brew Connection' },
   { path: 'demo/lab', component: Lab, title: 'Schema explorer | Brew Connection' },
   { path: 'demo/story', component: Story, title: 'Demo story | Brew Connection' },
   { path: 'demo/:feature', component: Story, title: 'Coming next | Brew Connection' },

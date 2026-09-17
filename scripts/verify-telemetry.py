@@ -17,11 +17,15 @@ assert b['brewer']['slug']=='priya-nair' and b['recipeRevision']['revision']==2
 assert b['samples'][30]['flowRate']==12 and b['samples'][30]['deviation']==8
 assert all(x['flowRate']==4 for x in b['samples'] if x['second']!=30)
 pulse=req('/pulse');assert pulse['sampleCount']==120 and pulse['totalCount']==360
-assert len(pulse['buckets'])==12 and all(x['count']==30 for x in pulse['buckets'])
-assert pulse['percentile95']==5 and pulse['ratePerMinute']==3 and pulse['waterGramsPerSecond']==4
-assert len(pulse['downsampled'])==4 and all(x['averageCount']==3 and x['count']==90 for x in pulse['downsampled'])
+assert [x['count'] for x in pulse['buckets']]==[5,10,15,20,30,40,60,70,50,30,20,10]
+assert pulse['percentile95']==7 and pulse['ratePerMinute']==3 and pulse['waterGramsPerSecond']==4
+assert [x['averageCount'] for x in pulse['downsampled']]==[1,3,6,2]
+assert [x['count'] for x in pulse['downsampled']]==[30,90,180,60]
 assert all(x['timestamp']==1789401600000+i*600000 for i,x in enumerate(pulse['buckets']))
-assert len(req('/pulse?bucketMinutes=1')['buckets'])==120
+for minutes,bucket_count in ((1,120),(5,24),(30,4),(60,2)):
+ buckets=req(f'/pulse?bucketMinutes={minutes}')['buckets']
+ assert len(buckets)==bucket_count and sum(x['count'] for x in buckets)==360
+ assert len({x['count'] for x in buckets})>1
 req('/pulse?bucketMinutes=0',status=400);req('/brews/missing',status=404)
 run='verify-'+uuid.uuid4().hex[:12]
 from concurrent.futures import ThreadPoolExecutor

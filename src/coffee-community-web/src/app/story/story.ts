@@ -70,11 +70,12 @@ export class Story implements OnInit {
 
   protected readonly experiences = [
     { number: '01', title: 'Coffee passport', detail: 'People, tastings, games, and reconnects', route: '/demo/passport/maya-chen', model: 'Graph' },
-    { number: '02', title: 'Bean to cup', detail: 'Lot, roast, recipe, brewer, and reaction', route: '/demo/coffee/ethiopia-blueberry-bloom', model: 'Graph + documents' },
-    { number: '03', title: 'Find my next cup', detail: 'Keyword, semantic, and social ranking', route: '/demo/discover', model: 'Search + vectors' },
-    { number: '04', title: 'Live brew', detail: 'A pour-over curve against its recipe', route: '/demo/brews/blueberry-bloom-v60', model: 'Time-series' },
-    { number: '05', title: 'Community pulse', detail: 'Counters, activity, and nearby tables', route: '/demo/pulse', model: 'Key/value + geo' },
-    { number: '06', title: 'Query lab', detail: 'SQL, Cypher, plans, and transactions', route: '/demo/lab', model: 'Polyglot API' },
+    { number: '02', title: 'Game lounge', detail: 'Play history, opponents, and what was in every cup', route: '/demo/games/maya-chen', model: 'Graph + links' },
+    { number: '03', title: 'Bean to cup', detail: 'Lot, roast, recipe, brewer, and reaction', route: '/demo/coffee/ethiopia-blueberry-bloom', model: 'Graph + documents' },
+    { number: '04', title: 'Find my next cup', detail: 'Keyword, semantic, and social ranking', route: '/demo/discover', model: 'Search + vectors' },
+    { number: '05', title: 'Live brew', detail: 'A pour-over curve against its recipe', route: '/demo/brews/blueberry-bloom-v60', model: 'Time-series' },
+    { number: '06', title: 'Community pulse', detail: 'Counters, activity, and nearby tables', route: '/demo/pulse', model: 'Key/value + geo' },
+    { number: '07', title: 'Query lab', detail: 'SQL, Cypher, plans, and transactions', route: '/demo/lab', model: 'Polyglot API' },
   ];
 
   ngOnInit(): void { this.refresh(); }

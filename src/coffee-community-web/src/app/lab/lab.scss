@@ -31,6 +31,9 @@ p {
   gap: 32px;
   margin-top: 32px;
 }
+.explorer > nav {
+  grid-auto-rows: max-content;
+}
 nav {
   display: grid;
   gap: 5px;

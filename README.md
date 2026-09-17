@@ -16,9 +16,10 @@ A local demo of a tech-conference coffee community, built with Angular, ASP.NET 
 nvm use
 aspire start
 aspire wait web
+aspire wait slides
 ```
 
-Open [http://localhost:4200/demo/story](http://localhost:4200/demo/story). The Aspire command prints a tokenized dashboard URL for resource logs, traces, and health.
+Open the `slides` endpoint from the Aspire dashboard to present the Reveal.js deck, or open [http://localhost:4200/demo/story](http://localhost:4200/demo/story) to go directly to the demo. The Aspire command prints a tokenized dashboard URL for endpoints, logs, traces, and health.
 
 First startup downloads approximately 1.15 GB of pinned local models. Later starts reuse the ignored `.aspire/models` cache; see [local model setup](docs/local-models.md).
 
@@ -28,7 +29,7 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 
 - **Reveal Aspire resource state** shows live application, database, schema, and embedding readiness.
 - **Reset demo state** drops and recreates only the `coffee_demo` database, then reapplies the community schema and the deterministic `story` seed. See [reset and verification commands](docs/seed-profiles.md) for the `scale` profile.
-- The walkthrough slides are in [`docs/arcadedb-coffee-demo.md`](docs/arcadedb-coffee-demo.md) and use Obsidian's `---` slide separators.
+- The walkthrough is a self-contained Reveal.js app in [`src/coffee-community-slides`](src/coffee-community-slides). Aspire starts it with the rest of the stack and supplies the live Angular endpoint to every demo link.
 
 ## Phase 2 checkpoints
 
@@ -40,6 +41,7 @@ ArcadeDB data persists in the `arcadedb-demo-data` Docker volume. The demo uses 
 
 - [Badge scan](http://localhost:4200/demo/meet/maya-chen) records a meeting for Maya.
 - [Coffee passport](http://localhost:4200/demo/passport/maya-chen) combines cups, people, reactions, and games.
+- [Game lounge](http://localhost:4200/demo/games/maya-chen) follows Wingspan, Magic the Gathering, Monopoly, Bid Whist, and Pokemon TCG sessions through the player graph, including what each opponent drank and links into coffee provenance.
 - [Community network](http://localhost:4200/demo/network/maya-chen?target=luis-ortega) explains introductions, shared interests, reconnects, and rematches.
 - [Graph rehearsal guide](docs/community-graph.md) covers slide order, game actions, and integration tests.
 
@@ -95,3 +97,5 @@ npm --prefix src/coffee-community-web run test:slides
 ```
 
 The browser suite requires running Aspire resources and Playwright Chromium (installation instructions are in the runbook). It resets the story once, follows all 26 slide actions in order, and writes a timestamped report. Reset again before presenting: the suite deliberately leaves its completed actions available for inspection.
+
+The deck app itself supports Reveal.js keyboard controls: Left/Right advances, `Esc` or `O` opens the overview, `S` opens the speaker view with each slide's demo link, action, and expected result, and `F` toggles full screen. Append `?print-pdf` to the slides URL to use Reveal.js's print/PDF layout.

@@ -19,6 +19,8 @@ public sealed class CommunityDocuments(ArcadeDbClient db, CommunityGraphGate gat
     private readonly List<GraphQuery> queries = [];
     private string? transaction;
     private static string Str(JsonElement row, string field) => row.TryGetProperty(field, out var value) ? value.ToString() : "";
+    private static JsonElement? Element(JsonElement row, string field) => row.TryGetProperty(field, out var value) && value.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined) ? value.Clone() : null;
+    private static Dictionary<string, JsonElement> Pick(JsonElement row, params string[] fields) => fields.Where(field => row.TryGetProperty(field, out _)).ToDictionary(field => field, field => row.GetProperty(field).Clone());
     private static GraphRequestException Bad(string message) => new(400, message);
     private static void Text(string? value, int max = 300)
     {
@@ -58,10 +60,10 @@ public sealed class CommunityDocuments(ArcadeDbClient db, CommunityGraphGate gat
         }
         finally { transaction = null; gate.Semaphore.Release(); }
     }
-    private async Task<JsonElement[]> Query(string label, string command, object? parameters, CancellationToken ct)
+    private async Task<JsonElement[]> Query(string label, string command, object? parameters, CancellationToken ct, string language = "sql")
     {
-        queries.Add(new(label, "sql", command, parameters));
-        using var result = transaction is null ? await db.QueryAsync("sql", command, parameters, ct) : await db.CommandInTransactionAsync(transaction, "sql", command, parameters, ct);
+        queries.Add(new(label, language, command, parameters));
+        using var result = transaction is null ? await db.QueryAsync(language, command, parameters, ct) : await db.CommandInTransactionAsync(transaction, language, command, parameters, ct);
         return result.RootElement.GetProperty("result").EnumerateArray().Select(r => r.Clone()).ToArray();
     }
     private async Task<JsonElement> Record(string type, string slug, CancellationToken ct)
@@ -167,31 +169,57 @@ public sealed class CommunityDocuments(ArcadeDbClient db, CommunityGraphGate gat
             new { slug = request.Slug, person = request.PersonSlug, subject = request.SubjectSlug, visibility = request.Visibility, body = request.Body, searchText = request.Visibility == "public" ? request.Body : "", at = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) }, ct);
         return await Notes(request.PersonSlug, request.SubjectType, request.SubjectSlug, ct);
     }
-    private async Task<JsonElement?> Related(string edge, string slug, bool outgoing, CancellationToken ct)
-    {
-        var field = outgoing ? "@in" : "@out"; var source = outgoing ? "@out" : "@in";
-        var rows = await Query($"Follow {edge}", $"SELECT expand({field}) FROM {edge} WHERE {source}.slug=:slug", new { slug }, ct);
-        return rows.Length == 0 ? null : rows[0];
-    }
     public async Task<object> Coffee(string slug, string persona, CancellationToken ct)
     {
-        await Record("Person", persona, ct);
-        var batch = await Record("RoastBatch", slug, ct);
-        var lot = await Related("FROM_LOT", slug, true, ct); var roaster = await Related("ROASTED", slug, false, ct); var vendor = await Related("SELLS", slug, false, ct);
-        var profiles = await Query("Nested roast profile document", "SELECT FROM RoastProfile WHERE roastBatch.slug=:slug", new { slug }, ct);
-        var brewRows = await Query("Brews using this batch", "SELECT expand(@out) FROM USED_BATCH WHERE @in.slug=:slug", new { slug }, ct);
-        var brews = new List<object>();
-        foreach (var brew in brewRows)
+        var graphRows = await Query("Single Cypher provenance graph", """
+            MATCH (viewer:Person {slug:$persona}), (batch:RoastBatch {slug:$slug})
+            OPTIONAL MATCH (batch)-[:FROM_LOT]->(lot:CoffeeLot)
+            OPTIONAL MATCH (roaster:Organization)-[:ROASTED]->(batch)
+            OPTIONAL MATCH (vendor:VendorTable)-[:SELLS]->(batch)
+            OPTIONAL MATCH (brew:Brew)-[:USED_BATCH]->(batch)
+            OPTIONAL MATCH (brewer:Person)-[:BREWED]->(brew)
+            OPTIONAL MATCH (brew)-[:USED_RECIPE]->(recipe:Recipe)
+            OPTIONAL MATCH (taster:Person)-[tasted:TASTED]->(brew)
+            OPTIONAL MATCH (lover:Person)-[loved:LOVED]->(brew)
+            RETURN batch{.*} AS batch, lot{.*} AS lot, roaster{.*} AS roaster, vendor{.*} AS vendor,
+                   brew{.*} AS brew, brewer{.*} AS brewer, recipe{.*} AS recipe,
+                   taster{.*} AS taster, tasted{.*} AS tasted, lover{.*} AS lover, loved{.*} AS loved
+            ORDER BY brew.slug, taster.slug, lover.slug
+            """, new { slug, persona }, ct, "cypher");
+        if (graphRows.Length == 0)
         {
-            var brewSlug = Str(brew, "slug"); var brewer = await Related("BREWED", brewSlug, false, ct); var recipe = await Related("USED_RECIPE", brewSlug, true, ct);
-            var pinned = await Query("Historical revision pinned on USED_RECIPE", "SELECT expand(revision) FROM USED_RECIPE WHERE @out.slug=:slug", new { slug = brewSlug }, ct);
-            var reactions = new List<object>();
-            foreach (var kind in new[] { "TASTED", "LOVED" })
-            {
-                var rows = await Query($"Attendee {kind} reactions", $"SELECT @out.slug AS personSlug, reaction, context FROM {kind} WHERE @in.slug=:slug", new { slug = brewSlug }, ct);
-                foreach (var row in rows) reactions.Add(new { person = await Record("Person", Str(row, "personSlug"), ct), kind, reaction = Str(row, "reaction") is { Length: > 0 } reaction ? reaction : Str(row, "context") });
-            }
-            brews.Add(new { brew, brewer, recipe, revision = pinned.Length == 0 ? (JsonElement?)null : pinned[0], reactions });
+            // Preserve the endpoint's specific not-found responses without adding reads to the normal path.
+            await Record("Person", persona, ct); await Record("RoastBatch", slug, ct);
+            throw new GraphRequestException(404, "Provenance graph not found.");
+        }
+        var batch = Element(graphRows[0], "batch")!.Value;
+        var lot = Element(graphRows[0], "lot"); var roaster = Element(graphRows[0], "roaster"); var vendor = Element(graphRows[0], "vendor");
+        var profiles = await Query("Nested roast profile document", "SELECT FROM RoastProfile WHERE roastBatch.slug=:slug", new { slug }, ct);
+        var pinnedRows = await Query("Historical revisions pinned on USED_RECIPE", "SELECT @out.slug AS brewSlug, revision.slug AS slug, revision.revision AS revision, revision.steps AS steps, revision.equipment AS equipment, revision.grind AS grind, revision.temperatureC AS temperatureC, revision.coffeeGrams AS coffeeGrams, revision.waterGrams AS waterGrams, revision.commentary AS commentary, revision.fingerprint AS fingerprint FROM USED_RECIPE WHERE @out IN (SELECT expand(@out) FROM USED_BATCH WHERE @in.slug=:slug)", new { slug }, ct);
+        var pinned = pinnedRows.ToDictionary(row => Str(row, "brewSlug"), row => Pick(row, "slug", "revision", "steps", "equipment", "grind", "temperatureC", "coffeeGrams", "waterGrams", "commentary", "fingerprint"));
+        var brewRows = new Dictionary<string, JsonElement>(); var brewers = new Dictionary<string, JsonElement>(); var recipes = new Dictionary<string, JsonElement>();
+        var reactions = new Dictionary<string, List<object>>(); var reactionKeys = new HashSet<string>();
+        void AddReaction(string brewSlug, string kind, JsonElement? person, JsonElement? edge)
+        {
+            if (person is null || edge is null || !reactionKeys.Add($"{brewSlug}:{kind}:{Str(person.Value, "slug")}")) return;
+            if (!reactions.TryGetValue(brewSlug, out var list)) reactions[brewSlug] = list = [];
+            var text = Str(edge.Value, "reaction") is { Length: > 0 } reaction ? reaction : Str(edge.Value, "context");
+            list.Add(new { person = person.Value, kind, reaction = text });
+        }
+        foreach (var row in graphRows)
+        {
+            var brew = Element(row, "brew"); if (brew is null) continue;
+            var brewSlug = Str(brew.Value, "slug"); if (brewSlug.Length == 0) continue;
+            brewRows[brewSlug] = brew.Value;
+            if (Element(row, "brewer") is { } brewer) brewers[brewSlug] = brewer;
+            if (Element(row, "recipe") is { } recipe) recipes[brewSlug] = recipe;
+            AddReaction(brewSlug, "TASTED", Element(row, "taster"), Element(row, "tasted"));
+            AddReaction(brewSlug, "LOVED", Element(row, "lover"), Element(row, "loved"));
+        }
+        var brews = new List<object>();
+        foreach (var (brewSlug, brew) in brewRows.OrderBy(entry => entry.Key))
+        {
+            brews.Add(new { brew, brewer = brewers.TryGetValue(brewSlug, out var brewer) ? brewer : (JsonElement?)null, recipe = recipes.TryGetValue(brewSlug, out var recipe) ? recipe : (JsonElement?)null, revision = pinned.GetValueOrDefault(brewSlug), reactions = reactions.GetValueOrDefault(brewSlug, []) });
         }
         var notes = await VisibleNotes(persona, "RoastBatch", slug, ct);
         return new { batch, lot, roaster, vendor, roastProfile = profiles.Length == 0 ? (JsonElement?)null : profiles[0], brews, notes, queries = queries.ToArray() };

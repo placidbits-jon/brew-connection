@@ -66,12 +66,10 @@ def verify():
         query("SELECT expand(out('MET')) FROM Person WHERE slug='maya-chen'")[0]["name"]
         == "Priya Nair"
     )
-    assert (
-        query("SELECT expand(in('BEAT_IN_GAME')) FROM Person WHERE slug='maya-chen'")[
-            0
-        ]["name"]
-        == "Luis Ortega"
-    )
+    assert {
+        row["name"]
+        for row in query("SELECT expand(in('BEAT_IN_GAME')) FROM Person WHERE slug='maya-chen'")
+    } == {"Luis Ortega", "Priya Nair"}
     assert query(
         "SELECT currentRevision.steps AS steps FROM Recipe WHERE slug='blueberry-v60'"
     )[0]["steps"]
@@ -105,10 +103,12 @@ def verify():
         )[0]["slug"]
         == "blueberry-v60-v2"
     )
-    assert query("SELECT score, opponentScore FROM BEAT_IN_GAME")[0] == {
-        "score": 10,
-        "opponentScore": 7,
-    }
+    games = {row["name"] for row in query("SELECT name FROM Game")}
+    assert games == {"Wingspan", "Magic the Gathering", "Monopoly", "Bid Whist", "Pokemon TCG"}
+    assert len(query("SELECT FROM GameSession")) == 5
+    assert all(row["score"] > row["opponentScore"] for row in query("SELECT score, opponentScore FROM BEAT_IN_GAME"))
+    game_drinks = query("SELECT drink.slug AS brewSlug, drinkNote FROM PLAYED_IN")
+    assert len(game_drinks) == 10 and all(row.get("brewSlug") and row.get("drinkNote") for row in game_drinks)
     assert (
         query(
             "SELECT expand(out('LOVED').out('USED_BATCH')) FROM Person WHERE slug='priya-nair'"

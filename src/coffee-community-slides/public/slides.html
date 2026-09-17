@@ -1,0 +1,420 @@
+<section data-slide-kind="slide" data-slide-id="title">
+<h1>Coffee, Community, and One Multi-Model Database</h1>
+<p>ArcadeDB at a tech convention&#39;s community coffee space</p>
+<p><strong>Story:</strong> Remember the people, coffees, recipes, and moments worth finding again.</p>
+</section>
+<section data-slide-kind="slide" data-slide-id="connected-questions">
+<h2>One event, many connected questions</h2>
+<ul>
+<li>Who did I meet, and why did I want to reconnect?</li>
+<li>Which coffee did I love, who roasted it, and who brewed it?</li>
+<li>What recipe produced that cup?</li>
+<li>Who beat me at a game?</li>
+<li>What should I try next?</li>
+</ul>
+</section>
+<section data-slide-kind="slide" data-slide-id="access-patterns">
+<h2>One application, seven access patterns</h2>
+<p><strong>ArcadeDB:</strong> Graph, document, key/value, full-text, vector, time-series, and geospatial</p>
+<ul>
+<li>Relationships preserve the community story.</li>
+<li>Documents preserve flexible recipes, profiles, and notes.</li>
+<li>Specialized indexes answer search, similarity, telemetry, and proximity questions.</li>
+<li>One engine removes cross-database synchronization from the demo.</li>
+</ul>
+</section>
+<section data-slide-kind="slide" data-slide-id="local-architecture">
+<h2>Local architecture</h2>
+<pre><code class="language-text">Angular -&gt; ASP.NET Core -&gt; ArcadeDB HTTP/JSON
+                         -&gt; SQL / Cypher / Redis
+          Local embedding service -&gt; 768-d vectors
+          Telemetry simulator -&gt; time-series ingestion
+
+Aspire starts, connects, observes, and resets every resource.
+</code></pre>
+</section>
+<section data-slide-kind="demo" data-slide-id="repeatable-local-stage">
+<h2>A repeatable local stage</h2>
+<p><strong>ArcadeDB:</strong> Persistent container, HTTP API, migration marker, and deterministic seed</p>
+<ul>
+<li>Aspire starts ArcadeDB 26.9.1, the API, Angular, embeddings, and telemetry together.</li>
+<li>The API separates process, database, schema, seed, and embedding readiness.</li>
+<li>Reset rebuilds only the named demo database, so every presentation begins at the same point.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/story" data-demo-path="/demo/story" target="_blank" rel="noopener">Open the story screen</a></p>
+<p><strong>Action:</strong> Select <strong>Reveal Aspire resource state</strong>.</p>
+<p><strong>Look for:</strong> Four green status indicators for the app, ArcadeDB, schema, and local embeddings.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="community-record-types">
+<h2>One community, many record types</h2>
+<p><strong>ArcadeDB:</strong> Vertex, edge, document, time-series, and specialized indexes</p>
+<ul>
+<li>Stable slugs identify people and coffees across resets.</li>
+<li>Graph links connect the story; nested documents retain recipe details.</li>
+<li>Full-text, vector, ordered, hash, and geospatial indexes serve different questions.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/lab?view=schema" data-demo-path="/demo/lab?view=schema" target="_blank" rel="noopener">Open the schema explorer</a></p>
+<p><strong>Action:</strong> Select <strong>Person</strong> in the type list.</p>
+<p><strong>Look for:</strong> The live <code>Person</code> vertex type, its <code>slug</code> property, and the unique <code>Person[slug]</code> hash index.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="repeatable-community-story">
+<h2>A repeatable community story</h2>
+<p><strong>ArcadeDB:</strong> Deterministic vertices, attributed edges, and linked documents</p>
+<ul>
+<li>Maya meets Priya and tastes her Blueberry Bloom V60.</li>
+<li>Luis beats Maya at Magic the Gathering, creating a reason to reconnect.</li>
+<li>The story profile begins with 40 people, 8 vendors, 25 roast batches, 20 recipes, and 100 brews.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/story?persona=maya" data-demo-path="/demo/story?persona=maya" target="_blank" rel="noopener">Open Maya&#39;s story</a></p>
+<p><strong>Action:</strong> Select <strong>Maya Chen · attendee</strong> in <strong>Explore as</strong> and read <strong>A story you can follow</strong>.</p>
+<p><strong>Look for:</strong> Priya Nair under <strong>People met</strong>, Priya&#39;s Blueberry Bloom V60 under <strong>Cups tasted</strong>, and Luis Ortega under <strong>Rematch targets</strong>.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="record-meeting">
+<h2>Record a meeting</h2>
+<p><strong>ArcadeDB:</strong> Persistent badge lookup and an attributed <code>MET</code> edge</p>
+<ul>
+<li>A badge resolves to a person using a stable indexed key.</li>
+<li>The meeting records where and why two people connected.</li>
+<li>Repeating the same scan keeps one relationship.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/meet/maya-chen" data-demo-path="/demo/meet/maya-chen" target="_blank" rel="noopener">Scan a badge as Maya</a></p>
+<p><strong>Action:</strong> Leave badge code <code>badge-0003</code> selected and click <strong>Scan badge</strong>.</p>
+<p><strong>Look for:</strong> Maya meets Attendee 0003, with the meeting context and location saved. Scanning again does not add another meeting.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="coffee-passport">
+<h2>Your coffee passport</h2>
+<p><strong>ArcadeDB:</strong> Traversals over tasting, love, meeting, and game edges</p>
+<ul>
+<li>One timeline brings together cups, conversations, and games.</li>
+<li>Reactions belong to the relationship between a person and a brew.</li>
+<li>Query inspection exposes the statements behind the timeline.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/passport/maya-chen" data-demo-path="/demo/passport/maya-chen" target="_blank" rel="noopener">Open Maya&#39;s passport</a></p>
+<p><strong>Action:</strong> Click <strong>Love this cup</strong> for the default <code>blueberry-bloom-v60</code> brew, then <strong>Inspect queries</strong> beside <strong>Your timeline</strong>.</p>
+<p><strong>Look for:</strong> Maya&#39;s love for Priya&#39;s Blueberry Bloom V60 appears in the timeline, alongside the executed query and parameters.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="game-lounge">
+<h2>Games become connections</h2>
+<p><strong>ArcadeDB:</strong> Player and session vertices, attributed participation edges, and linked game and brew records</p>
+<ul>
+<li>Five familiar games turn the personas into a believable game-night community.</li>
+<li>A single traversal returns each session, opponent, score, and both players&#39; cups.</li>
+<li>Each cup continues into the existing bean-to-cup provenance graph.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/games/maya-chen" data-demo-path="/demo/games/maya-chen" target="_blank" rel="noopener">Open Maya&#39;s game journey</a></p>
+<p><strong>Action:</strong> Compare <strong>Your cup</strong> with the opponent&#39;s cup, then inspect <strong>Game journey</strong>.</p>
+<p><strong>Look for:</strong> Each session shows what Maya and her opponent drank, tasting notes, and a link into the coffee&#39;s provenance; the query crosses participation edges, brew links, and <code>USED_BATCH</code>.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="rematch-candidates">
+<h2>Who beat me?</h2>
+<p><strong>ArcadeDB:</strong> Game session vertices and scored <code>BEAT_IN_GAME</code> edges</p>
+<ul>
+<li>A session groups participants and an outcome.</li>
+<li>Scores remain attached to the game relationship.</li>
+<li>A loss becomes an explicit rematch candidate.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/network/maya-chen?target=luis-ortega" data-demo-path="/demo/network/maya-chen?target=luis-ortega" target="_blank" rel="noopener">Open Maya&#39;s community network</a></p>
+<p><strong>Action:</strong> Select <strong>Show rematch candidates</strong> in <strong>Time for a rematch</strong>.</p>
+<p><strong>Look for:</strong> Luis Ortega beat Maya 2–1 at Magic the Gathering in <code>maya-luis-magic</code>.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="shortest-social-path">
+<h2>The shortest social path</h2>
+<p><strong>ArcadeDB:</strong> Multi-hop traversal through the <code>MET</code> graph</p>
+<ul>
+<li>Maya knows Priya, and Priya knows Luis.</li>
+<li>The path explains how to make an introduction.</li>
+<li>The result comes from the current relationship graph.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/network/maya-chen?target=luis-ortega" data-demo-path="/demo/network/maya-chen?target=luis-ortega" target="_blank" rel="noopener">Find Maya&#39;s path to Luis</a></p>
+<p><strong>Action:</strong> Click <strong>Find shortest path</strong> with Luis Ortega selected.</p>
+<p><strong>Look for:</strong> Maya Chen → Priya Nair → Luis Ortega, two meeting hops.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="reconnect-targets">
+<h2>People to reconnect with</h2>
+<p><strong>ArcadeDB:</strong> Attributed <code>WANTS_TO_RECONNECT</code> edges and shared interests</p>
+<ul>
+<li>Explicit intent keeps useful conversations from getting lost.</li>
+<li>Shared interests provide a reason to reconnect.</li>
+<li>Saving the same target again does not duplicate that intent.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/network/maya-chen?target=luis-ortega" data-demo-path="/demo/network/maya-chen?target=luis-ortega" target="_blank" rel="noopener">Open Maya&#39;s reconnect targets</a></p>
+<p><strong>Action:</strong> Select <strong>Show reconnect targets</strong> in <strong>Reconnect next</strong>.</p>
+<p><strong>Look for:</strong> Priya Nair remains Maya&#39;s reconnect target for the blueberry recipe.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="structured-recipe">
+<h2>A structured recipe</h2>
+<p><strong>ArcadeDB:</strong> A recipe vertex linked to a nested <code>RecipeRevision</code> document</p>
+<ul>
+<li>Steps retain timing, water amounts, and instructions together.</li>
+<li>Equipment, grind, temperature, and commentary remain structured fields.</li>
+<li>The vertex links the recipe into the community graph.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/recipes/blueberry-v60?persona=maya-chen" data-demo-path="/demo/recipes/blueberry-v60?persona=maya-chen" target="_blank" rel="noopener">Open the Blueberry Bloom recipe</a></p>
+<p><strong>Action:</strong> Select <strong>Revision 1</strong> in <strong>Compare prior revision</strong>, then inspect <strong>Current nested recipe document</strong>.</p>
+<p><strong>Look for:</strong> Revision 2 with three pour steps, 300 grams of water, 93°C, and a 20-click grind setting.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="private-note">
+<h2>A plain-text memory</h2>
+<p><strong>ArcadeDB:</strong> A note document with owner and subject links</p>
+<ul>
+<li>Notes can refer to a person, brew, roast batch, recipe, or game session.</li>
+<li>Private memories belong to the selected demo persona.</li>
+<li>Public notes can be shared without exposing private text.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen" data-demo-path="/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen" target="_blank" rel="noopener">Remember Maya&#39;s cup</a></p>
+<p><strong>Action:</strong> Set <strong>About</strong> to <strong>Brew</strong> and <strong>Subject slug</strong> to <code>blueberry-bloom-v60</code>, then click <strong>Load subject notes</strong>. Enter <code>Ask Priya about the sweeter finish.</code> in <strong>Note</strong>, leave visibility private, and click <strong>Save note</strong>. Switch <strong>Demo persona</strong> to Priya Nair.</p>
+<p><strong>Look for:</strong> Maya sees the saved memory; Priya does not see Maya&#39;s private note for the same brew.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="recipe-revision">
+<h2>Publish without losing history</h2>
+<p><strong>ArcadeDB:</strong> Immutable revision documents and an atomic current-revision link</p>
+<ul>
+<li>Publication adds a document instead of overwriting the earlier recipe.</li>
+<li>Comparison keeps earlier settings available.</li>
+<li>Existing brews keep their original revision link.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/recipes/blueberry-v60?persona=maya-chen" data-demo-path="/demo/recipes/blueberry-v60?persona=maya-chen" target="_blank" rel="noopener">Publish the next recipe revision</a></p>
+<p><strong>Action:</strong> Change <strong>Grind clicks</strong> to <code>18</code> and click <strong>Publish revision</strong>. Select revision 2 in <strong>Compare prior revision</strong>.</p>
+<p><strong>Look for:</strong> Current revision 3 uses 18 clicks; revision 2 still has 20 clicks and its original nested steps.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="bean-to-cup-provenance">
+<h2>Bean-to-cup provenance</h2>
+<p><strong>ArcadeDB:</strong> Connected vertices, relationship attributes, and linked documents</p>
+<ul>
+<li>The origin lot connects to the roast, vendor, brewer, recipe, and taster.</li>
+<li>Selecting a node reveals its stored properties.</li>
+<li>The brew&#39;s pinned revision preserves what actually produced the cup.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen" data-demo-path="/demo/coffee/ethiopia-blueberry-bloom?persona=maya-chen" target="_blank" rel="noopener">Trace Blueberry Bloom</a></p>
+<p><strong>Action:</strong> Select the <strong>Pinned revision 2</strong> node for Priya&#39;s Blueberry Bloom V60.</p>
+<p><strong>Look for:</strong> Ethiopia Guji Lot 17, Great Lakes Roasters, Great Lakes Coffee Table, Priya&#39;s brew, and Maya&#39;s reaction. The selected revision remains 2 even after publication advances the recipe to revision 3.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="keyword-search">
+<h2>Keyword search</h2>
+<p><strong>ArcadeDB:</strong> Lucene full-text index with BM25 relevance</p>
+<ul>
+<li>Search the same canonical public text used to generate vectors.</li>
+<li>Inspect phrase, fuzzy spelling, stemming, autocomplete, and more-like-this examples.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/discover?query=blueberry&mode=keyword&persona=maya-chen&availableOnly=true" data-demo-path="/demo/discover?query=blueberry&mode=keyword&persona=maya-chen&availableOnly=true" target="_blank" rel="noopener">Match blueberry</a></p>
+<p><strong>Action:</strong> Keep <code>blueberry</code> in the search box and select <strong>Keyword</strong>.</p>
+<p><strong>Look for:</strong> Ethiopia Blueberry Bloom ranks first. Blueberry Label Dark Roast also matches, despite its smoky profile. Summer Orchard is absent because its description uses berry nectar and blossom instead.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="semantic-search">
+<h2>Semantic search</h2>
+<p><strong>ArcadeDB:</strong> Indexed cosine neighbors over 768-dimensional local EmbeddingGemma vectors</p>
+<ul>
+<li>Match related meanings, including descriptions without the literal query word.</li>
+<li>Each result shows its actual cosine distance; lower is closer.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/discover?query=blueberry&mode=semantic&persona=maya-chen&availableOnly=true" data-demo-path="/demo/discover?query=blueberry&mode=semantic&persona=maya-chen&availableOnly=true" target="_blank" rel="noopener">Find related meanings</a></p>
+<p><strong>Action:</strong> Select <strong>Semantic</strong>, keeping the query <code>blueberry</code>.</p>
+<p><strong>Look for:</strong> Summer Orchard appears at rank 4 with zero keyword contribution. Blueberry Label Dark Roast is first: semantic retrieval adds related candidates, but this single-word query does not express a roast preference.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="hybrid-ranking">
+<h2>Hybrid ranking</h2>
+<p><strong>ArcadeDB:</strong> Full-text and vector indexes feeding an explicit combined score</p>
+<ul>
+<li>The API combines 0.35 × normalized BM25 and 0.65 × cosine similarity.</li>
+<li>Contributions are visible instead of hidden behind a generated answer.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/discover?query=blueberry&mode=hybrid&persona=maya-chen&availableOnly=true" data-demo-path="/demo/discover?query=blueberry&mode=hybrid&persona=maya-chen&availableOnly=true" target="_blank" rel="noopener">Combine words and meaning</a></p>
+<p><strong>Action:</strong> Select <strong>Hybrid</strong>, keeping <code>blueberry</code>, then inspect the first result&#39;s score contributions.</p>
+<p><strong>Look for:</strong> Ethiopia Blueberry Bloom moves from semantic rank 3 to hybrid rank 1. Summer Orchard remains in the results through its vector contribution.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="personalized-discovery">
+<h2>Find my next coffee</h2>
+<p><strong>ArcadeDB:</strong> Hybrid candidates plus actual acquaintance → favorite brew → available coffee paths</p>
+<ul>
+<li>A qualifying community path adds 0.50 to the combined score.</li>
+<li>Recommendations show who loved the brew and where its coffee is available.</li>
+<li>The optional local language model only rewrites the query; database retrieval supplies every result and explanation.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/discover?query=blueberry&mode=personalized&persona=maya-chen&availableOnly=true" data-demo-path="/demo/discover?query=blueberry&mode=personalized&persona=maya-chen&availableOnly=true" target="_blank" rel="noopener">Ask Maya&#39;s community</a></p>
+<p><strong>Action:</strong> Select <strong>Personalized</strong>, keeping <code>blueberry</code>. Read the community evidence on the first result.</p>
+<p><strong>Look for:</strong> Priya&#39;s Honey Stonefruit moves from hybrid rank 5 to personalized rank 1. Its explanation follows Maya — MET → Priya — LOVED → a brew — USED_BATCH → this coffee, with an available vendor.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="indexed-code-lookup">
+<h2>One code, one community record</h2>
+<p><strong>ArcadeDB:</strong> Persistent uniquely indexed key/value documents</p>
+<ul>
+<li>A badge resolves directly to the attendee&#39;s graph record.</li>
+<li>A short code resolves to a coffee with provenance.</li>
+<li>Both mappings survive a database-container restart.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/lookup?code=badge-0001" data-demo-path="/demo/lookup?code=badge-0001" target="_blank" rel="noopener">Look up Priya&#39;s badge</a></p>
+<p><strong>Action:</strong> Click <strong>Look up code</strong>, then follow <strong>Priya Nair</strong>.</p>
+<p><strong>Look for:</strong> <code>badge-0001</code> resolves to Priya&#39;s passport. The <code>short-blueberry</code> example resolves to Ethiopia Blueberry Bloom.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="transient-tasting-counter">
+<h2>One more tasting</h2>
+<p><strong>ArcadeDB:</strong> Transient Redis <code>GET</code> and <code>INCR</code> commands through the HTTP executor</p>
+<ul>
+<li>The live counter is intentionally held in the database server&#39;s memory.</li>
+<li>The historical time-series totals below are separate durable records.</li>
+<li>Restarting the API preserves the counter; restarting ArcadeDB resets it.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/pulse" data-demo-path="/demo/pulse" target="_blank" rel="noopener">Add a live tasting</a></p>
+<p><strong>Action:</strong> Note the live count, then click <strong>Add one tasting</strong> once.</p>
+<p><strong>Look for:</strong> The live value increases by exactly 1 and shows <strong>Last increment: +1</strong>. The page explicitly labels the database-restart reset behavior.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="pour-telemetry">
+<h2>Watch the pour</h2>
+<p><strong>ArcadeDB:</strong> Native time-series ingestion and bounded timestamp/tag queries</p>
+<ul>
+<li>Simulated measurements retain their brew, brewer, device, and method tags.</li>
+<li>The graph supplies the brew&#39;s pinned recipe revision.</li>
+<li>Replay ingests a separate run, preserving the seeded measurements.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/brews/blueberry-bloom-v60" data-demo-path="/demo/brews/blueberry-bloom-v60" target="_blank" rel="noopener">Replay Blueberry Bloom</a></p>
+<p><strong>Action:</strong> Click <strong>Replay simulation</strong> and wait for 60 samples. Keep <strong>Inspect second</strong> at <code>30</code>.</p>
+<p><strong>Look for:</strong> The <strong>30-second pour spike</strong> reaches 12 g/s against a 4 g/s target. Measured water is 120 g; the interpolated pinned-recipe target is 140 g, a −20 g deviation.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="event-time-buckets">
+<h2>The event, in time buckets</h2>
+<p><strong>ArcadeDB:</strong> Native time buckets, percentile, rate, and query-time downsampling</p>
+<ul>
+<li>Durable minute samples reveal patterns beyond the transient live count.</li>
+<li>Changing the bucket size changes the view while preserving the source samples.</li>
+<li>An isolated retention example demonstrates lifecycle behavior separately from the authored story.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/pulse?bucketMinutes=10" data-demo-path="/demo/pulse?bucketMinutes=10" target="_blank" rel="noopener">Read the event pulse</a></p>
+<p><strong>Action:</strong> Keep <strong>Bucket size</strong> at <strong>10 minutes</strong>, click <strong>Regroup samples</strong>, and select a bar.</p>
+<p><strong>Look for:</strong> 120 minute samples sum to 360 events. The 12 bars rise from a quiet opening to a 70-tasting peak before tapering; the 95th percentile is 7, the overall rate is 3 events/minute, and the 30-minute downsample totals are 30, 90, 180, and 60.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="nearby-coffee">
+<h2>Nearby coffee, connected</h2>
+<p><strong>ArcadeDB:</strong> Indexed polygon containment, native distance in meters, and graph-linked vendor offers</p>
+<ul>
+<li>Search from a coordinate within the convention boundary.</li>
+<li>Distance answers where; the graph answers which coffees are sold there.</li>
+<li>Selecting a marker highlights its vendor and linked coffees.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/map?latitude=42.3314&longitude=-83.0458&radius=100&area=pour-over-bar" data-demo-path="/demo/map?latitude=42.3314&longitude=-83.0458&radius=100&area=pour-over-bar" target="_blank" rel="noopener">Find the nearest coffee table</a></p>
+<p><strong>Action:</strong> Click <strong>Find nearby</strong>, then select <strong>Great Lakes Coffee Table</strong> on the map or result list.</p>
+<p><strong>Look for:</strong> Great Lakes Coffee Table is first at 0.0 m, inside the selected boundary, with Ethiopia Blueberry Bloom linked beneath it. Vendor Table 1 is approximately 8.2 m away.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="acid-tasting-transaction">
+<h2>One ACID tasting transaction</h2>
+<p><strong>ArcadeDB:</strong> A single HTTP transaction session spanning SQL vertex, document, and edge writes</p>
+<ul>
+<li>The brew, public note, and four relationships commit together.</li>
+<li>The recipe link pins the immutable revision used for the tasting.</li>
+<li>Repeating the same operation does not duplicate the tasting.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/transactions?scenario=commit" data-demo-path="/demo/transactions?scenario=commit" target="_blank" rel="noopener">Commit the complete tasting</a></p>
+<p><strong>Action:</strong> Click <strong>Run successful tasting</strong>.</p>
+<p><strong>Look for:</strong> <strong>Committed</strong> and a +1 change for Brew, Note, BREWED, USED_BATCH, USED_RECIPE, and TASTED. SQL and Cypher show the same new record ID. A repeat reports <strong>Already committed</strong> with zero new changes.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="transaction-rollback">
+<h2>What if it fails halfway?</h2>
+<p><strong>ArcadeDB:</strong> Rollback of staged vertex and relationship writes</p>
+<ul>
+<li>The failure scenario uses a separate tasting identity.</li>
+<li>Staged records are visible inside the transaction before rollback.</li>
+<li>Fresh reads verify the rollback after it is acknowledged.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/transactions?scenario=rollback" data-demo-path="/demo/transactions?scenario=rollback" target="_blank" rel="noopener">Trigger the controlled failure</a></p>
+<p><strong>Action:</strong> Click <strong>Trigger halfway failure</strong>.</p>
+<p><strong>Look for:</strong> <strong>Inside transaction</strong> shows one extra Brew, BREWED edge, and USED_BATCH edge. <strong>After</strong> matches <strong>Before</strong> for every checked graph/document type, and the page reports <strong>Rolled back</strong>. No failed-tasting record survives.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="polyglot-record">
+<h2>The same record, through another language</h2>
+<p><strong>ArcadeDB:</strong> SQL and Cypher over the same stored graph vertex</p>
+<ul>
+<li>SQL creates the transaction&#39;s Brew.</li>
+<li>Cypher reads it immediately without a copy or synchronization job.</li>
+<li>SQL <code>@rid</code> and Cypher <code>elementId()</code> identify the same record.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/lab?view=queries&example=sql-transaction-brew" data-demo-path="/demo/lab?view=queries&example=sql-transaction-brew" target="_blank" rel="noopener">Read the committed tasting</a></p>
+<p><strong>Action:</strong> Click <strong>Run query</strong> and note the RID. Select <strong>Committed Brew through Cypher</strong>, then click <strong>Run query</strong> again.</p>
+<p><strong>Look for:</strong> Both reads return <strong>Transaction Blueberry V60</strong> with exactly the same RID. If no tasting has been committed yet, the lab gives an explicit empty-state message.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="query-plan">
+<h2>Inspect the query plan</h2>
+<p><strong>ArcadeDB:</strong> Native SQL EXPLAIN for a fixed full-text query</p>
+<ul>
+<li>The catalog supplies bounded, read-only statements and fixed parameters.</li>
+<li>Each run shows actual records, database round-trip time, and plan availability.</li>
+<li>SQL, Cypher, Redis, vector, time-series, and geospatial examples share one lab.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/lab?view=queries&example=fulltext-coffee" data-demo-path="/demo/lab?view=queries&example=fulltext-coffee" target="_blank" rel="noopener">Inspect the full-text plan</a></p>
+<p><strong>Action:</strong> Click <strong>Run query</strong> and read <strong>Execution plan</strong>.</p>
+<p><strong>Look for:</strong> The blueberry query returns Ethiopia Blueberry Bloom and an actual <strong>FETCH FROM INDEXED FUNCTION SEARCH_INDEX</strong> plan. The lab shows the fixed <code>blueberry</code> parameter and measured execution time; it does not accept arbitrary statements.</p>
+</aside>
+</section>
+<section data-slide-kind="demo" data-slide-id="compatibility-checkpoint">
+<h2>Compatibility checkpoint</h2>
+<p><strong>ArcadeDB:</strong> Version 26.9.1 with native and plugin query engines</p>
+<ul>
+<li>Seven fixed runtime reads cover SQL, Cypher, Redis GET, full-text, vector, time-series, and geospatial queries.</li>
+<li>Each result includes its returned record count and available native plan.</li>
+<li>Transaction, mutation, and retention checks remain separate demonstrations.</li>
+</ul>
+<aside class="notes">
+<p><strong>Activate demo:</strong> <a href="http://localhost:4200/demo/lab?view=compatibility" data-demo-path="/demo/lab?view=compatibility" target="_blank" rel="noopener">Open the query lab</a></p>
+<p><strong>Action:</strong> Select <strong>Run compatibility summary</strong>.</p>
+<p><strong>Look for:</strong> Seven <code>read-completed</code> results with actual record counts. The displayed limitations explain that this read-only summary does not test transaction writes, rollback, Redis increments, or retention.</p>
+</aside>
+</section>
+<section data-slide-kind="slide" data-slide-id="closing">
+<h2>Why this matters</h2>
+<ul>
+<li>The same coffee can be traversed, searched, ranked, charted, and located.</li>
+<li>One database removes synchronization jobs between graph, document, search, telemetry, and location stores.</li>
+<li>The ACID demo commits or rolls back its graph and document writes together.</li>
+<li>The live demo is reproducible from a clean local seed.</li>
+<li>Redis counters are transient, telemetry retention is demonstrated separately, and measured rankings from the pinned local EmbeddingGemma model do not guarantee results for arbitrary queries.</li>
+</ul>
+</section>

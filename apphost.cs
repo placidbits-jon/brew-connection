@@ -47,11 +47,17 @@ var api = builder.AddProject("api", "./src/CoffeeCommunity.Api/CoffeeCommunity.A
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
-builder.AddViteApp("web", "./src/coffee-community-web", "start")
+var web = builder.AddViteApp("web", "./src/coffee-community-web", "start")
     .WithEndpoint("http", endpoint => endpoint.Port = 4200)
     .WithEnvironment("API_HTTP", api.GetEndpoint("http"))
     .WithReference(api)
     .WaitFor(api)
+    .WithExternalHttpEndpoints();
+
+builder.AddViteApp("slides", "./src/coffee-community-slides")
+    .WithEnvironment("VITE_DEMO_APP_URL", web.GetEndpoint("http"))
+    .WithReference(web)
+    .WaitFor(web)
     .WithExternalHttpEndpoints();
 
 builder.AddProject("telemetry-simulator", "./src/CoffeeCommunity.TelemetrySimulator/CoffeeCommunity.TelemetrySimulator.csproj")
